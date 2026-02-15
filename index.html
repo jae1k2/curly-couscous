@@ -1,5 +1,752 @@
 <!doctype html>
-<html>
-  <head><meta charset="utf-8"><title>Seoul Eats</title></head>
-  <body>hello</body>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>서울 음식점 지도</title>
+
+  <!-- 1) Kakao Maps JS SDK (services 라이브러리 포함: 주소 검색/역지오코딩 필요) -->
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=5c2fb05e6765f133c747e1f5a2bdf64d&libraries=services"></script>
+
+  <!-- 2) Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --panel:#11131a;
+      --card:#171a23;
+      --text:#e9ecf1;
+      --muted:#a7afbf;
+      --line:#242a36;
+      --accent:#7aa2ff;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+      --radius2:22px;
+      --top:56px;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Apple SD Gothic Neo, Noto Sans KR, sans-serif; background:var(--bg); color:var(--text); }
+
+    .topbar{
+      position:fixed; left:0; right:0; top:0; height:var(--top);
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background: rgba(11,12,16,.85);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+    }
+    .brand{ font-weight:800; letter-spacing:.2px; white-space:nowrap; }
+    .search{
+      flex:1; max-width:760px;
+      display:flex; align-items:center; gap:8px;
+      padding:10px 12px; border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(23,26,35,.75);
+    }
+    .search input{
+      width:100%; border:0; outline:0;
+      background:transparent; color:var(--text);
+      font-size:14px;
+    }
+    .search input::placeholder{ color: rgba(167,175,191,.7); }
+
+    button{
+      border:1px solid var(--line);
+      background: rgba(23,26,35,.75);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:999px;
+      cursor:pointer;
+      transition: transform .08s ease, border-color .2s ease;
+    }
+    button:hover{ border-color: rgba(122,162,255,.55); }
+    button:active{ transform: scale(.98); }
+    button.primary{
+      background: rgba(122,162,255,.16);
+      border-color: rgba(122,162,255,.45);
+    }
+    button:disabled{ opacity:.55; cursor:not-allowed; }
+
+    /* Map */
+    #map{
+      position:fixed;
+      left:0; right:0;
+      top:var(--top); bottom:0;
+    }
+
+    /* Right panel */
+    .panel{
+      position:fixed; top:var(--top); right:0; bottom:0;
+      width:min(420px, 92vw);
+      background: rgba(17,19,26,.90);
+      backdrop-filter: blur(10px);
+      border-left:1px solid var(--line);
+      box-shadow: var(--shadow);
+      transform: translateX(102%);
+      transition: transform .22s ease;
+      z-index: 1200;
+      display:flex; flex-direction:column;
+    }
+    .panel.open{ transform: translateX(0); }
+    .panelHeader{
+      padding:14px;
+      border-bottom:1px solid var(--line);
+      display:flex; gap:10px; align-items:flex-start;
+    }
+    .panelHeader h2{ margin:0; font-size:16px; line-height:1.2; }
+    .sub{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+      word-break: break-word;
+    }
+    .panelBody{ padding:14px; overflow:auto; flex:1; }
+    .hint{ font-size:12px; color:var(--muted); line-height:1.45; }
+
+    .section{ margin-top:14px; }
+    .sectionTitle{
+      margin:0 0 10px;
+      font-size:12px;
+      color: rgba(167,175,191,.9);
+      text-transform: uppercase;
+      letter-spacing:.2px;
+    }
+
+    .card{
+      background: rgba(23,26,35,.8);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding:12px;
+      margin-bottom:10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.18);
+    }
+    .visitTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .badge{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.12);
+      white-space:nowrap;
+    }
+    .visitContent{
+      margin-top:10px;
+      white-space:pre-wrap;
+      font-size:13px;
+      line-height:1.55;
+    }
+
+    label{
+      display:block;
+      font-size:12px;
+      color: rgba(167,175,191,.95);
+      margin:0 0 6px;
+    }
+    input, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      background: rgba(23,26,35,.8);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px;
+      outline:none;
+      font-size:13px;
+    }
+    textarea{
+      min-height: 120px;
+      resize: vertical;
+      line-height:1.55;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 120px;
+      gap:10px;
+    }
+    .row{
+      display:flex;
+      gap:8px;
+      justify-content:flex-end;
+      margin-top:10px;
+    }
+
+    /* Overlays */
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.45);
+      z-index: 2000;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+    }
+    .overlay.open{ display:flex; }
+    .modal{
+      width:min(720px, 96vw);
+      background: rgba(17,19,26,.92);
+      border:1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modalHeader{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      display:flex; align-items:center; gap:10px;
+    }
+    .modalHeader h3{ margin:0; font-size:15px; flex:1; }
+    .modalBody{ padding:16px; }
+    .results{ margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+    .resultItem{
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(23,26,35,.8);
+      cursor:pointer;
+    }
+    .resultItem:hover{ border-color: rgba(122,162,255,.55); }
+    .resultItem .t{ font-weight:800; font-size:13px; margin-bottom:4px; }
+    .resultItem .s{ font-size:12px; color:var(--muted); line-height:1.35; }
+
+    /* Toast */
+    .toast{
+      position: fixed;
+      left:50%; transform:translateX(-50%);
+      bottom:18px;
+      z-index: 3000;
+      background: rgba(23,26,35,.9);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:10px 14px;
+      box-shadow: var(--shadow);
+      display:none;
+      gap:10px;
+      align-items:center;
+    }
+    .toast.show{ display:flex; }
+    .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent); }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="brand">🍜 Seoul Eats</div>
+
+    <div class="search" title="기록된 가게 검색 (Enter)">
+      <span style="opacity:.75">🔎</span>
+      <input id="q" placeholder="기록된 가게 검색 (Enter)" />
+    </div>
+
+    <button id="addBtn" class="primary">추가하기</button>
+    <button id="authBtn">로그인</button>
+  </div>
+
+  <div id="map"></div>
+
+  <aside id="panel" class="panel" aria-hidden="true">
+    <div class="panelHeader">
+      <div style="flex:1;min-width:0">
+        <h2 id="placeName">가게 선택해줘</h2>
+        <div class="sub" id="placeAddr">마커 누르면 뜸</div>
+      </div>
+      <button id="closePanelBtn">닫기</button>
+    </div>
+
+    <div class="panelBody">
+      <div class="hint" id="panelHint">마커 클릭하면 방문기 쓰는 칸이 생겨.</div>
+
+      <div class="section">
+        <h4 class="sectionTitle">방문 기록</h4>
+        <div id="visits"></div>
+      </div>
+
+      <div class="section" id="editor" style="display:none">
+        <h4 class="sectionTitle">방문기 쓰기</h4>
+
+        <div class="grid">
+          <div>
+            <label>방문 날짜</label>
+            <input id="visitDate" type="date" />
+          </div>
+          <div>
+            <label>평점 (0~5)</label>
+            <input id="visitRating" type="number" min="0" max="5" step="0.5" placeholder="4.5" />
+          </div>
+        </div>
+
+        <div style="margin-top:10px">
+          <label>방문기 (문서처럼 길게)</label>
+          <textarea id="visitContent" placeholder="오늘은 국물 농도는 가벼웠는데…"></textarea>
+        </div>
+
+        <div class="row">
+          <button id="saveVisitBtn" class="primary">저장</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Add place overlay -->
+  <div id="addOverlay" class="overlay" aria-hidden="true">
+    <div class="modal">
+      <div class="modalHeader">
+        <h3>새 음식점 추가</h3>
+        <button id="closeAddBtn">닫기</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="grid" style="grid-template-columns:1fr 1fr">
+          <div>
+            <label>가게 이름</label>
+            <input id="newName" type="text" placeholder="예: OO라멘" />
+          </div>
+          <div>
+            <label>주소(검색어)</label>
+            <input id="newAddr" type="text" placeholder="예: 연남동 라멘 / 도로명 주소" />
+          </div>
+        </div>
+
+        <div class="row" style="justify-content:flex-start;margin-top:10px">
+          <button id="addrSearchBtn" class="primary">주소 찾기</button>
+          <span id="geoStatus" class="hint"></span>
+        </div>
+
+        <div class="hint" style="margin-top:8px">
+          후보가 여러 개면 하나 골라. 선택하면 마커가 생기고, 그 가게로 바로 이동해.
+        </div>
+
+        <div id="results" class="results"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth overlay -->
+  <div id="authOverlay" class="overlay" aria-hidden="true">
+    <div class="modal" style="width:min(520px,96vw)">
+      <div class="modalHeader">
+        <h3>로그인 (이메일 매직링크)</h3>
+        <button id="closeAuthBtn">닫기</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="card">
+          <label>이메일</label>
+          <input id="email" type="email" placeholder="you@example.com" />
+          <div class="row">
+            <button id="sendLinkBtn" class="primary">로그인 링크 보내기</button>
+          </div>
+          <div class="hint">메일로 온 링크 누르면 로그인 완료되고, 이 기기에도 세션이 남아.</div>
+        </div>
+
+        <div class="hint" style="margin-top:10px">
+          주의: Redirect URLs에 GitHub Pages 주소가 등록돼 있어야 정상 동작함.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"><span class="dot"></span><span id="toastText">.</span></div>
+
+  <script>
+    /*************************************************************
+     * 0) 너가 교체해야 할 3개 (필수)
+     *************************************************************/
+    const KAKAO_READY = !!(window.kakao && window.kakao.maps);
+
+    const SUPABASE_URL = "https://tqybsmrmzxnfuwypbazn.supabase.co"; // 예: https://xxxxx.supabase.co
+    const SUPABASE_KEY = "sb_publishable_NOdwos9jU0jwL0AzvZrHHg_KSH5f2e1"; // sb_publishable_... (또는 legacy anon)
+
+    /*************************************************************
+     * 1) 유틸
+     *************************************************************/
+    const $ = (id) => document.getElementById(id);
+
+    function toast(msg){
+      const t = $('toast');
+      $('toastText').textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toast._tm);
+      toast._tm = setTimeout(()=>t.classList.remove('show'), 2200);
+    }
+
+    function esc(s){
+      return String(s ?? '')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+    }
+
+    function open(el){ el.classList.add('open'); el.setAttribute('aria-hidden','false'); }
+    function close(el){ el.classList.remove('open'); el.setAttribute('aria-hidden','true'); }
+
+    function todayISO(){ return new Date().toISOString().slice(0,10); }
+
+    /*************************************************************
+     * 2) 상태
+     *************************************************************/
+    let supabase = null;
+    let user = null;
+
+    let map = null;
+    let geocoder = null;
+
+    let places = [];
+    const markers = new Map(); // placeId -> kakao.maps.Marker
+    let selectedPlace = null;
+
+    /*************************************************************
+     * 3) 패널 동작
+     *************************************************************/
+    function openPanel(){ open($('panel')); }
+    function closePanel(){
+      close($('panel'));
+      selectedPlace = null;
+      $('placeName').textContent = '가게 선택해줘';
+      $('placeAddr').textContent = '마커 누르면 뜸';
+      $('visits').innerHTML = '';
+      $('editor').style.display = 'none';
+      $('panelHint').textContent = '마커 클릭하면 방문기 쓰는 칸이 생겨.';
+    }
+    $('closePanelBtn').addEventListener('click', closePanel);
+
+    /*************************************************************
+     * 4) 오버레이 버튼
+     *************************************************************/
+    $('addBtn').addEventListener('click', ()=> open($('addOverlay')));
+    $('closeAddBtn').addEventListener('click', ()=> close($('addOverlay')));
+
+    $('authBtn').addEventListener('click', ()=> open($('authOverlay')));
+    $('closeAuthBtn').addEventListener('click', ()=> close($('authOverlay')));
+
+    /*************************************************************
+     * 5) Supabase 초기화 + Auth
+     *************************************************************/
+    function supabaseConfigured(){
+      return SUPABASE_URL && SUPABASE_KEY && !SUPABASE_URL.includes("YOUR_") && !SUPABASE_KEY.includes("YOUR_");
+    }
+
+    async function initSupabase(){
+      if(!supabaseConfigured()){
+        toast('Supabase URL/KEY부터 넣어줘');
+        return;
+      }
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      // 세션 복구
+      const { data } = await supabase.auth.getSession();
+      user = data.session?.user ?? null;
+      $('authBtn').textContent = user ? '계정' : '로그인';
+
+      // 인증 이벤트 반영
+      supabase.auth.onAuthStateChange(async (_event, session) => {
+        user = session?.user ?? null;
+        $('authBtn').textContent = user ? '계정' : '로그인';
+        await loadPlacesAndRender();
+        if(!user) closePanel();
+      });
+    }
+
+    // 이메일 매직링크 로그인
+    $('sendLinkBtn').addEventListener('click', async () => {
+      if(!supabase){ toast('Supabase 설정부터'); return; }
+      const email = ($('email').value || '').trim();
+      if(!email){ toast('이메일 써줘'); return; }
+
+      $('sendLinkBtn').disabled = true;
+      try{
+        const redirect = window.location.origin + window.location.pathname; // Pages에서 안전하게
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: { emailRedirectTo: redirect }
+        });
+        if(error){ console.error(error); toast('메일 발송 실패'); return; }
+        toast('로그인 링크 보냄');
+      } finally {
+        $('sendLinkBtn').disabled = false;
+      }
+    });
+
+    /*************************************************************
+     * 6) 지도 초기화 (Kakao)
+     *************************************************************/
+    function initMap(){
+      if(!KAKAO_READY){
+        toast('카카오 지도 SDK 로딩 실패 (도메인 등록/키 확인)');
+        return;
+      }
+      const center = new kakao.maps.LatLng(37.5665, 126.9780);
+      map = new kakao.maps.Map($('map'), { center, level: 6 });
+      geocoder = new kakao.maps.services.Geocoder();
+    }
+
+    /*************************************************************
+     * 7) DB 로딩/렌더
+     *************************************************************/
+    async function loadPlacesAndRender(){
+      if(!supabase || !user){
+        places = [];
+        // 마커 정리
+        for(const m of markers.values()) m.setMap(null);
+        markers.clear();
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('places')
+        .select('*')
+        .order('created_at', { ascending:false });
+
+      if(error){ console.error(error); toast('places 로딩 실패'); return; }
+      places = data ?? [];
+      renderMarkers();
+    }
+
+    function renderMarkers(){
+      // 없는 것 제거
+      for(const [id, m] of markers.entries()){
+        if(!places.find(p => p.id === id)){
+          m.setMap(null);
+          markers.delete(id);
+        }
+      }
+
+      // 새 것 생성
+      for(const p of places){
+        if(markers.has(p.id)) continue;
+
+        const pos = new kakao.maps.LatLng(p.lat, p.lng);
+        const marker = new kakao.maps.Marker({ position: pos });
+        marker.setMap(map);
+        kakao.maps.event.addListener(marker, 'click', ()=> openPlace(p.id));
+        markers.set(p.id, marker);
+      }
+    }
+
+    async function openPlace(placeId){
+      const place = places.find(p => p.id === placeId);
+      if(!place) return;
+
+      selectedPlace = place;
+
+      $('placeName').textContent = place.name;
+      $('placeAddr').textContent = place.address;
+      $('panelHint').textContent = '아래에서 방문기 쓰고 저장하면 카드로 쌓여.';
+      $('editor').style.display = 'block';
+
+      $('visitDate').value = todayISO();
+      $('visitRating').value = '';
+      $('visitContent').value = '';
+
+      openPanel();
+
+      // 지도 이동
+      const pos = new kakao.maps.LatLng(place.lat, place.lng);
+      map.setCenter(pos);
+      map.setLevel(Math.min(map.getLevel(), 4));
+
+      // 방문기 로딩
+      await loadVisitsAndRender(place.id);
+    }
+
+    async function loadVisitsAndRender(placeId){
+      const wrap = $('visits');
+      wrap.innerHTML = '<div class="hint">불러오는 중…</div>';
+
+      const { data, error } = await supabase
+        .from('visits')
+        .select('*')
+        .eq('place_id', placeId)
+        .order('visited_at', { ascending:false })
+        .order('created_at', { ascending:false });
+
+      if(error){ console.error(error); toast('visits 로딩 실패'); wrap.innerHTML=''; return; }
+
+      const items = data ?? [];
+      if(items.length === 0){
+        wrap.innerHTML = '<div class="hint">아직 방문 기록 없음. 아래에서 하나 써.</div>';
+        return;
+      }
+
+      wrap.innerHTML = '';
+      for(const v of items){
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <div class="visitTop">
+            <div style="font-weight:800">${esc(v.visited_at)}</div>
+            <div class="badge">${v.rating == null ? '평점 없음' : '평점 ' + esc(v.rating)}</div>
+          </div>
+          <div class="visitContent">${esc(v.content || '')}</div>
+        `;
+        wrap.appendChild(div);
+      }
+    }
+
+    /*************************************************************
+     * 8) 방문기 저장
+     *************************************************************/
+    $('saveVisitBtn').addEventListener('click', async () => {
+      if(!supabase || !user){ toast('로그인부터'); return; }
+      if(!selectedPlace){ toast('가게부터 선택'); return; }
+
+      const visited_at = $('visitDate').value || todayISO();
+      const ratingRaw = $('visitRating').value;
+      const rating = (ratingRaw === '') ? null : Math.max(0, Math.min(5, Number(ratingRaw)));
+      const content = ($('visitContent').value || '').trim();
+
+      if(!content){ toast('방문기 내용은 써줘'); return; }
+
+      $('saveVisitBtn').disabled = true;
+      try{
+        const payload = {
+          user_id: user.id,
+          place_id: selectedPlace.id,
+          visited_at,
+          rating,
+          content
+        };
+
+        const { error } = await supabase.from('visits').insert(payload);
+        if(error){ console.error(error); toast('저장 실패'); return; }
+
+        $('visitContent').value = '';
+        $('visitRating').value = '';
+        toast('저장됨');
+        await loadVisitsAndRender(selectedPlace.id);
+      } finally {
+        $('saveVisitBtn').disabled = false;
+      }
+    });
+
+    /*************************************************************
+     * 9) 음식점 추가: 주소 검색 → 후보 선택 → places 저장
+     *************************************************************/
+    $('addrSearchBtn').addEventListener('click', () => {
+      if(!geocoder){ toast('지도 준비 안 됨'); return; }
+      if(!supabase || !user){ toast('로그인부터'); return; }
+
+      const name = ($('newName').value || '').trim();
+      const q = ($('newAddr').value || '').trim();
+      if(!q){ toast('주소(검색어) 넣어줘'); return; }
+
+      $('geoStatus').textContent = '찾는 중…';
+      $('results').innerHTML = '';
+
+      geocoder.addressSearch(q, (result, status) => {
+        if(status !== kakao.maps.services.Status.OK || !result || result.length === 0){
+          $('geoStatus').textContent = '결과 없음';
+          return;
+        }
+
+        $('geoStatus').textContent = `후보 ${result.length}개`;
+
+        for(const r of result){
+          const lat = Number(r.y);
+          const lng = Number(r.x);
+          const addr = r.address_name || q;
+
+          const item = document.createElement('div');
+          item.className = 'resultItem';
+          item.innerHTML = `
+            <div class="t">${esc(name || '이름 미정')}</div>
+            <div class="s">${esc(addr)}</div>
+            <div class="s">좌표: ${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+          `;
+
+          item.addEventListener('click', async () => {
+            // 서울 제한(행정구역으로 체크)
+            const ok = await checkSeoul(lat, lng);
+            if(!ok){ toast('서울 아니면 저장 막을게'); return; }
+
+            const place = await createPlace({
+              name: name || '이름 미정',
+              address: addr,
+              lat, lng
+            });
+
+            close($('addOverlay'));
+            $('newName').value = '';
+            $('newAddr').value = '';
+            $('results').innerHTML = '';
+            $('geoStatus').textContent = '';
+
+            toast('가게 추가됨');
+            await loadPlacesAndRender();
+            await openPlace(place.id);
+          });
+
+          $('results').appendChild(item);
+        }
+      });
+    });
+
+    async function checkSeoul(lat, lng){
+      return new Promise((resolve) => {
+        // coord2RegionCode: (lng, lat)
+        geocoder.coord2RegionCode(lng, lat, (res, status) => {
+          if(status !== kakao.maps.services.Status.OK || !res || res.length === 0){
+            // 판정 실패 시 너무 빡세게 막지 않기
+            resolve(true);
+            return;
+          }
+          const any = res.find(x => x.region_1depth_name) || res[0];
+          const r1 = (any.region_1depth_name || '');
+          resolve(r1.includes('서울'));
+        });
+      });
+    }
+
+    async function createPlace({ name, address, lat, lng }){
+      const payload = { user_id: user.id, name, address, lat, lng };
+      const { data, error } = await supabase
+        .from('places')
+        .insert(payload)
+        .select('*')
+        .single();
+
+      if(error){ console.error(error); toast('가게 저장 실패'); throw error; }
+      return data;
+    }
+
+    /*************************************************************
+     * 10) 상단 검색: 저장된 places 중에서만 검색
+     *************************************************************/
+    $('q').addEventListener('keydown', (e) => {
+      if(e.key !== 'Enter') return;
+      const q = ($('q').value || '').trim().toLowerCase();
+      if(!q) return;
+
+      const hit = places.find(p =>
+        (p.name || '').toLowerCase().includes(q) ||
+        (p.address || '').toLowerCase().includes(q)
+      );
+
+      if(!hit){ toast('검색 결과 없음'); return; }
+      openPlace(hit.id);
+    });
+
+    /*************************************************************
+     * 11) 시작
+     *************************************************************/
+    window.addEventListener('load', async () => {
+      $('visitDate').value = todayISO();
+
+      initMap();
+      await initSupabase();
+      await loadPlacesAndRender();
+
+      if(!supabaseConfigured()) toast('먼저 Supabase 키를 index.html에 넣어줘');
+      if(!KAKAO_READY) toast('카카오 도메인 등록/키 확인 필요');
+    });
+  </script>
+</body>
 </html>
