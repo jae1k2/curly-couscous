@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Seoul Shared Eats</title>
+
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=5c2fb05e6765f133c747e1f5a2bdf64d&libraries=services"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{margin:0;font-family:system-ui;background:#0f1117;color:#eee}
+#map{position:fixed;top:60px;bottom:0;left:0;right:0}
+.topbar{
+position:fixed;top:0;left:0;right:0;height:60px;
+background:#151922;display:flex;align-items:center;
+padding:0 12px;gap:10px;border-bottom:1px solid #222;z-index:10
+}
+button{background:#1d2230;color:#fff;border:1px solid #333;
+padding:8px 12px;border-radius:8px;cursor:pointer}
+button.primary{background:#3b82f6;border:none}
+.panel{
+position:fixed;right:0;top:60px;bottom:0;width:400px;
+background:#11151e;border-left:1px solid #222;
+overflow:auto;transform:translateX(100%);
+transition:.2s;z-index:20;padding:16px
+}
+.panel.open{transform:translateX(0)}
+.overlay{
+position:fixed;inset:0;background:rgba(0,0,0,.6);
+display:none;align-items:center;justify-content:center;z-index:50
+}
+.overlay.open{display:flex}
+.modal{background:#1b1f2a;padding:20px;width:350px;border-radius:12px}
+input,textarea{
+width:100%;padding:8px;margin-top:6px;margin-bottom:10px;
+background:#0f1117;border:1px solid #333;color:#fff;border-radius:6px
+}
+.visit{border:1px solid #333;padding:10px;border-radius:8px;margin-bottom:10px}
+.small{font-size:12px;color:#aaa}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+<strong>🌏 Seoul Shared Eats</strong>
+<button id="addBtn" class="primary">추가</button>
+<button id="authBtn">로그인</button>
+</div>
+
+<div id="map"></div>
+
+<div id="panel" class="panel">
+<h3 id="placeTitle">가게 선택</h3>
+<div id="visits"></div>
+
+<div id="editor" style="display:none">
+<input id="visitDate" type="date">
+<input id="visitRating" type="number" min="0" max="5" step="0.5" placeholder="평점">
+<textarea id="visitContent" placeholder="방문기 작성"></textarea>
+<button id="saveVisitBtn" class="primary">저장</button>
+</div>
+</div>
+
+<!-- Add Modal -->
+<div id="addOverlay" class="overlay">
+<div class="modal">
+<h3>가게 추가</h3>
+<input id="newName" placeholder="가게 이름">
+<input id="newAddr" placeholder="주소 검색">
+<button id="addrSearchBtn" class="primary">주소 찾기</button>
+<div id="results"></div>
+<button onclick="closeAdd()">닫기</button>
+</div>
+</div>
+
+<!-- Auth Modal -->
+<div id="authOverlay" class="overlay">
+<div class="modal">
+<h3>로그인 / 회원가입</h3>
+<input id="email" type="email" placeholder="이메일">
+<input id="password" type="password" placeholder="비밀번호">
+<button id="loginBtn" class="primary">로그인</button>
+<button id="signupBtn">회원가입</button>
+<button onclick="closeAuth()">닫기</button>
+</div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://tqybsmrmzxnfuwypbazn.supabase.co";
+const SUPABASE_KEY = "sb_publishable_NOdwos9jU0jwL0AzvZrHHg_KSH5f2e1";
+
+let sb = null;
+let user = null;
+let map, geocoder;
+let places = [];
+let markers = new Map();
+let selectedPlace = null;
+
+function open(el){el.classList.add("open")}
+function close(el){el.classList.remove("open")}
+function closeAdd(){close(document.getElementById("addOverlay"))}
+function closeAuth(){close(document.getElementById("authOverlay"))}
+
+async function initSupabase(){
+sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const { data } = await sb.auth.getSession();
+user = data.session?.user ?? null;
+document.getElementById("authBtn").textContent = user ? user.email : "로그인";
+sb.auth.onAuthStateChange((_e, session)=>{
+user = session?.user ?? null;
+document.getElementById("authBtn").textContent = user ? user.email : "로그인";
+loadPlaces();
+});
+}
+
+function initMap(){
+map = new kakao.maps.Map(document.getElementById("map"),{
+center:new kakao.maps.LatLng(37.5665,126.9780),level:6});
+geocoder = new kakao.maps.services.Geocoder();
+}
+
+async function loadPlaces(){
+const { data } = await sb.from("places").select("*");
+places = data ?? [];
+renderMarkers();
+}
+
+function renderMarkers(){
+for(const m of markers.values()) m.setMap(null);
+markers.clear();
+for(const p of places){
+const marker = new kakao.maps.Marker({
+position:new kakao.maps.LatLng(p.lat,p.lng)});
+marker.setMap(map);
+marker.addListener("click",()=>openPlace(p));
+markers.set(p.id,marker);
+}
+}
+
+async function openPlace(place){
+selectedPlace = place;
+document.getElementById("panel").classList.add("open");
+document.getElementById("placeTitle").textContent = place.name;
+document.getElementById("editor").style.display="block";
+loadVisits(place.id);
+}
+
+async function loadVisits(placeId){
+const { data } = await sb.from("visits")
+.select("*").eq("place_id",placeId)
+.order("visited_at",{ascending:false});
+const wrap = document.getElementById("visits");
+wrap.innerHTML="";
+for(const v of data ?? []){
+wrap.innerHTML += `
+<div class="visit">
+<strong>${v.visited_at}</strong> (평점:${v.rating ?? "-"}) 
+<div class="small">작성자: ${v.author_email}</div>
+<div>${v.content}</div>
+</div>`;
+}
+}
+
+document.getElementById("saveVisitBtn").onclick=async()=>{
+if(!user){alert("로그인 필요");return}
+const payload={
+user_id:user.id,
+place_id:selectedPlace.id,
+visited_at:document.getElementById("visitDate").value,
+rating:document.getElementById("visitRating").value||null,
+content:document.getElementById("visitContent").value,
+author_email:user.email
+};
+await sb.from("visits").insert(payload);
+loadVisits(selectedPlace.id);
+};
+
+document.getElementById("addBtn").onclick=()=>open(document.getElementById("addOverlay"));
+document.getElementById("authBtn").onclick=()=>open(document.getElementById("authOverlay"));
+
+document.getElementById("loginBtn").onclick=async()=>{
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+await sb.auth.signInWithPassword({email,password});
+closeAuth();
+};
+
+document.getElementById("signupBtn").onclick=async()=>{
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+await sb.auth.signUp({email,password});
+alert("회원가입 완료");
+};
+
+document.getElementById("addrSearchBtn").onclick=()=>{
+const name=document.getElementById("newName").value;
+const addr=document.getElementById("newAddr").value;
+geocoder.addressSearch(addr,(result,status)=>{
+if(status!==kakao.maps.services.Status.OK) return;
+const r=result[0];
+sb.from("places").insert({
+name,
+address:r.address_name,
+lat:Number(r.y),
+lng:Number(r.x)
+}).then(()=>{closeAdd();loadPlaces();});
+});
+};
+
+window.onload=async()=>{
+initMap();
+await initSupabase();
+await loadPlaces();
+};
+</script>
+
+</body>
+</html>
