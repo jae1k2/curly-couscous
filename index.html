@@ -10,130 +10,239 @@
 
   <style>
     :root{
-      --bg:#0b0c10; --panel:#11131a; --card:#171a23;
-      --text:#e9ecf1; --muted:#a7afbf; --line:#242a36;
-      --accent:#7aa2ff; --shadow:0 10px 30px rgba(0,0,0,.35);
-      --r:16px; --top:56px;
+      --bg:#0b0c10;
+      --card:rgba(20,22,30,.72);
+      --card2:rgba(24,27,37,.78);
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.14);
+      --text:#e9ecf1;
+      --muted:rgba(233,236,241,.65);
+      --accent:#9bb7ff;
+      --shadow:0 18px 50px rgba(0,0,0,.45);
+      --r:18px;
+      --pill:999px;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif;background:var(--bg);color:var(--text)}
-    #map{position:fixed;left:0;right:0;top:var(--top);bottom:0}
+    #map{position:fixed;inset:0}
 
-    .topbar{
-      position:fixed;left:0;right:0;top:0;height:var(--top);
-      display:flex;align-items:center;gap:10px;padding:10px 12px;
-      border-bottom:1px solid var(--line);
-      background:rgba(11,12,16,.85);backdrop-filter:blur(10px);z-index:1000;
+    /* floating dock (주간보드 느낌) */
+    .dock{
+      position:fixed;
+      left:14px; right:14px; top:12px;
+      display:flex; gap:10px; align-items:center;
+      padding:10px 12px;
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(12px);
+      z-index:1000;
     }
-    .brand{font-weight:800;letter-spacing:.2px;white-space:nowrap}
+    .brand{font-weight:900; letter-spacing:.2px; white-space:nowrap; opacity:.95}
     .search{
-      flex:1;max-width:760px;display:flex;align-items:center;gap:8px;
-      padding:10px 12px;border-radius:999px;border:1px solid var(--line);
-      background:rgba(23,26,35,.75)
+      flex:1; max-width:820px;
+      display:flex; gap:8px; align-items:center;
+      padding:10px 12px;
+      border-radius:var(--pill);
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.12);
     }
-    .search input{width:100%;border:0;outline:0;background:transparent;color:var(--text);font-size:14px}
-    .search input::placeholder{color:rgba(167,175,191,.7)}
-
+    .search input{
+      width:100%; border:0; outline:0; background:transparent;
+      color:var(--text); font-size:14px;
+    }
+    .search input::placeholder{color:rgba(233,236,241,.42)}
     button{
-      border:1px solid var(--line);background:rgba(23,26,35,.75);color:var(--text);
-      padding:10px 12px;border-radius:999px;cursor:pointer;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.14);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:var(--pill);
+      cursor:pointer;
     }
-    button.primary{background:rgba(122,162,255,.16);border-color:rgba(122,162,255,.45)}
-    button:disabled{opacity:.55;cursor:not-allowed}
-
-    .panel{
-      position:fixed;top:var(--top);right:0;bottom:0;width:min(420px,92vw);
-      background:rgba(17,19,26,.90);backdrop-filter:blur(10px);
-      border-left:1px solid var(--line);box-shadow:var(--shadow);
-      transform:translateX(102%);transition:transform .22s ease;z-index:1200;
-      display:flex;flex-direction:column;
+    button.primary{
+      background:rgba(155,183,255,.16);
+      border-color:rgba(155,183,255,.42);
     }
-    .panel.open{transform:translateX(0)}
-    .panelHeader{padding:14px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:flex-start}
-    .panelHeader h2{margin:0;font-size:16px;line-height:1.2}
-    .sub{margin-top:6px;color:var(--muted);font-size:12px;line-height:1.35;word-break:break-word}
-    .panelBody{padding:14px;overflow:auto;flex:1}
-    .hint{font-size:12px;color:var(--muted);line-height:1.45}
+    button:disabled{opacity:.55; cursor:not-allowed}
 
+    /* floating cards */
+    .float{
+      position:fixed;
+      background:var(--card2);
+      border:1px solid var(--line);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(12px);
+      z-index:1200;
+      overflow:hidden;
+    }
+    .floatHeader{
+      display:flex; gap:10px; align-items:flex-start;
+      padding:14px 14px 12px;
+      border-bottom:1px solid var(--line);
+    }
+    .floatHeader h3{
+      margin:0; font-size:15px; line-height:1.25;
+      font-weight:900;
+    }
+    .sub{margin-top:6px; color:var(--muted); font-size:12px; line-height:1.35; word-break:break-word}
+    .floatBody{padding:14px; max-height:70vh; overflow:auto}
+
+    .hint{font-size:12px; color:var(--muted); line-height:1.45}
     .section{margin-top:14px}
-    .sectionTitle{margin:0 0 10px;font-size:12px;color:rgba(167,175,191,.9);text-transform:uppercase;letter-spacing:.2px}
-
-    .card{background:rgba(23,26,35,.8);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:10px}
-    .visitTop{display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .badge{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.12);white-space:nowrap}
-    .visitContent{margin-top:10px;white-space:pre-wrap;font-size:13px;line-height:1.55}
-
-    label{display:block;font-size:12px;color:rgba(167,175,191,.95);margin:0 0 6px}
-    input, textarea{
-      width:100%;border:1px solid var(--line);background:rgba(23,26,35,.8);
-      color:var(--text);border-radius:12px;padding:10px;outline:none;font-size:13px
+    .sectionTitle{
+      margin:0 0 10px;
+      font-size:12px;
+      color:rgba(233,236,241,.62);
+      text-transform:uppercase;
+      letter-spacing:.25px;
     }
-    textarea{min-height:120px;resize:vertical;line-height:1.55}
-    .grid{display:grid;grid-template-columns:1fr 120px;gap:10px}
-    .row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
 
-    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:none;align-items:center;justify-content:center;padding:16px}
+    .card{
+      background:rgba(0,0,0,.14);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      margin-bottom:10px;
+    }
+    .visitTop{display:flex; justify-content:space-between; align-items:center; gap:10px}
+    .badge{
+      font-size:12px; padding:6px 10px;
+      border-radius:var(--pill);
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.10);
+      white-space:nowrap;
+    }
+    .visitContent{margin-top:10px; white-space:pre-wrap; font-size:13px; line-height:1.55}
+    .miniActions{display:flex; gap:8px; margin-top:10px; justify-content:flex-end}
+    .miniActions button{padding:8px 10px}
+
+    label{display:block; font-size:12px; color:rgba(233,236,241,.70); margin:0 0 6px}
+    input, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.16);
+      color:var(--text);
+      border-radius:14px;
+      padding:10px;
+      outline:none;
+      font-size:13px;
+    }
+    textarea{min-height:120px; resize:vertical; line-height:1.55}
+    .grid{display:grid; grid-template-columns:1fr 120px; gap:10px}
+    .row{display:flex; gap:8px; justify-content:flex-end; margin-top:10px}
+
+    /* overlays: dim + floating modal */
+    .overlay{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.35);
+      display:none; align-items:center; justify-content:center;
+      padding:16px;
+      z-index:2000;
+    }
     .overlay.open{display:flex}
-    .modal{width:min(720px,96vw);background:rgba(17,19,26,.92);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden}
-    .modalHeader{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
-    .modalHeader h3{margin:0;font-size:15px;flex:1}
+    .modal{
+      width:min(720px,96vw);
+      background:var(--card2);
+      border:1px solid var(--line);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(14px);
+      overflow:hidden;
+    }
+    .modalHeader{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      display:flex; align-items:center; gap:10px;
+    }
+    .modalHeader h3{margin:0; font-size:15px; flex:1; font-weight:900}
     .modalBody{padding:16px}
-    .results{margin-top:10px;display:flex;flex-direction:column;gap:8px}
-    .resultItem{padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(23,26,35,.8);cursor:pointer}
-    .resultItem:hover{border-color:rgba(122,162,255,.55)}
-    .resultItem .t{font-weight:800;font-size:13px;margin-bottom:4px}
-    .resultItem .s{font-size:12px;color:var(--muted);line-height:1.35}
-    .statGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-    .stat{background:rgba(0,0,0,.12);border:1px solid var(--line);border-radius:14px;padding:10px}
-    .stat .k{font-size:12px;color:var(--muted)}
-    .stat .v{font-size:18px;font-weight:900;margin-top:6px}
 
+    .results{margin-top:10px; display:flex; flex-direction:column; gap:8px}
+    .resultItem{
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(0,0,0,.14);
+      cursor:pointer;
+    }
+    .resultItem:hover{border-color:rgba(155,183,255,.48)}
+    .resultItem .t{font-weight:900; font-size:13px; margin-bottom:4px}
+    .resultItem .s{font-size:12px; color:var(--muted); line-height:1.35}
+
+    .statGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px}
+    .stat{
+      background:rgba(0,0,0,.14);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+    }
+    .stat .k{font-size:12px; color:var(--muted)}
+    .stat .v{font-size:18px; font-weight:1000; margin-top:6px}
+
+    /* toast */
     .toast{
-      position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:3000;
-      background:rgba(23,26,35,.9);border:1px solid var(--line);
-      border-radius:999px;padding:10px 14px;box-shadow:var(--shadow);
-      display:none;gap:10px;align-items:center
+      position:fixed;
+      left:50%; transform:translateX(-50%);
+      bottom:18px;
+      background:rgba(18,20,28,.88);
+      border:1px solid var(--line);
+      border-radius:var(--pill);
+      padding:10px 14px;
+      box-shadow:var(--shadow);
+      display:none; gap:10px; align-items:center;
+      z-index:3000;
+      backdrop-filter:blur(12px);
     }
     .toast.show{display:flex}
-    .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+    .dot{width:8px; height:8px; border-radius:50%; background:var(--accent)}
   </style>
 </head>
 
 <body>
-  <div class="topbar">
-    <div class="brand">🍜 Seoul Shared Eats</div>
+  <div id="map"></div>
+
+  <!-- floating dock -->
+  <div class="dock">
+    <div class="brand">🍜 Shared Eats</div>
 
     <div class="search" title="가게 검색 (Enter)">
       <span style="opacity:.75">🔎</span>
-      <input id="q" placeholder="가게 검색 (Enter)" />
+      <input id="q" placeholder="가게/주소 검색 (Enter)" />
     </div>
 
-    <button id="addBtn" class="primary">추가하기</button>
-    <button id="authBtn">로그인</button>
+    <button id="addBtn" class="primary">추가</button>
+
+    <!-- logged out -->
+    <button id="loginOpenBtn">로그인</button>
+    <button id="signupOpenBtn">회원가입</button>
+
+    <!-- logged in -->
+    <button id="accountOpenBtn" style="display:none">계정</button>
   </div>
 
-  <div id="map"></div>
-
-  <aside id="panel" class="panel" aria-hidden="true">
-    <div class="panelHeader">
+  <!-- Place floating card -->
+  <aside id="placeCard" class="float" style="right:14px; bottom:14px; width:min(440px,92vw); display:none">
+    <div class="floatHeader">
       <div style="flex:1;min-width:0">
-        <h2 id="placeName">가게 선택해줘</h2>
-        <div class="sub" id="placeAddr">마커 누르면 뜸</div>
+        <h3 id="placeName">가게</h3>
+        <div class="sub" id="placeAddr"></div>
         <div class="sub" id="placeMeta"></div>
       </div>
-      <button id="closePanelBtn">닫기</button>
+      <button id="closePlaceBtn">닫기</button>
     </div>
-
-    <div class="panelBody">
-      <div class="hint" id="panelHint">마커 클릭하면 방문 기록이 보여.</div>
+    <div class="floatBody">
+      <div class="hint" id="placeHint">방문 기록은 공개. 로그인하면 작성/수정/삭제 가능.</div>
 
       <div class="section">
         <h4 class="sectionTitle">방문 기록</h4>
         <div id="visits"></div>
       </div>
 
-      <div class="section" id="editor" style="display:none">
-        <h4 class="sectionTitle">방문기 쓰기</h4>
+      <div class="section" id="editorWrap" style="display:none">
+        <h4 class="sectionTitle" id="editorTitle">방문기 쓰기</h4>
 
         <div class="grid">
           <div>
@@ -152,48 +261,48 @@
         </div>
 
         <div class="row">
+          <button id="cancelEditBtn" style="display:none">편집 취소</button>
           <button id="saveVisitBtn" class="primary">저장</button>
         </div>
 
         <div class="hint" style="margin-top:10px">
-          방문기는 공개. 작성자는 “닉네임”으로 표시됨.
+          작성자 표시는 이메일이 아니라 닉네임.
         </div>
       </div>
 
-      <div class="section" id="loginHint" style="display:none">
-        <div class="hint">로그인하면 방문기를 남길 수 있어.</div>
+      <div class="section" id="needLoginHint" style="display:none">
+        <div class="hint">로그인 + 닉네임 설정이 끝나면 작성 가능.</div>
       </div>
     </div>
   </aside>
 
-  <!-- Add overlay -->
-  <div id="addOverlay" class="overlay" aria-hidden="true">
+  <!-- Add place modal -->
+  <div id="addOverlay" class="overlay">
     <div class="modal">
       <div class="modalHeader">
-        <h3>새 음식점 추가</h3>
+        <h3>음식점 추가</h3>
         <button id="closeAddBtn">닫기</button>
       </div>
-
       <div class="modalBody">
         <div class="grid" style="grid-template-columns:1fr 1fr">
           <div>
             <label>가게 이름</label>
-            <input id="newName" type="text" placeholder="예: OO라멘" />
+            <input id="newName" placeholder="예: 텐키라멘" />
           </div>
           <div>
             <label>주소(검색어)</label>
-            <input id="newAddr" type="text" placeholder="예: 강남 논현로30길 43" />
+            <input id="newAddr" placeholder="예: 강남 논현로30길 43" />
           </div>
         </div>
 
         <div class="row" style="justify-content:flex-start;margin-top:10px">
-          <button id="addrSearchBtn" class="primary">주소 찾기</button>
+          <button id="addrSearchBtn" class="primary">주소 후보 보기</button>
           <span id="geoStatus" class="hint"></span>
         </div>
 
         <div class="hint" style="margin-top:8px">
-          후보가 여러 개면 하나 골라. (서울만 저장)  
-          같은 이름+주소가 이미 있으면 “이미 등록됨” 안내 후 그 가게로 이동함.
+          중복 체크: (이름+주소) + (좌표 30m 근접).  
+          이미 있으면 “이미 등록됨” 안내하고 그 가게로 이동해.
         </div>
 
         <div id="results" class="results"></div>
@@ -201,50 +310,79 @@
     </div>
   </div>
 
-  <!-- Auth overlay -->
-  <div id="authOverlay" class="overlay" aria-hidden="true">
-    <div class="modal" style="width:min(560px,96vw)">
+  <!-- Login modal -->
+  <div id="loginOverlay" class="overlay">
+    <div class="modal" style="width:min(520px,96vw)">
       <div class="modalHeader">
-        <h3 id="authTitle">로그인 / 회원가입</h3>
-        <button id="closeAuthBtn">닫기</button>
+        <h3>로그인</h3>
+        <button id="closeLoginBtn">닫기</button>
       </div>
-
       <div class="modalBody">
-
-        <!-- 로그인/회원가입 카드 (로그아웃 상태에서만 표시) -->
-        <div class="card" id="loginCard">
+        <div class="card">
           <label>이메일</label>
-          <input id="email" type="email" placeholder="you@example.com" />
-          <label>비밀번호 (6자 이상)</label>
-          <input id="password" type="password" placeholder="••••••••" />
+          <input id="loginEmail" type="email" placeholder="you@example.com" />
+          <label>비밀번호</label>
+          <input id="loginPassword" type="password" placeholder="••••••••" />
           <div class="row">
             <button id="loginBtn" class="primary">로그인</button>
-            <button id="signupBtn">회원가입</button>
-          </div>
-          <div class="hint" style="margin-top:10px">
-            회원가입이 안 되면 Supabase에서 Email provider / Signups ON 확인.
           </div>
         </div>
+      </div>
+    </div>
+  </div>
 
-        <!-- 계정 카드 (로그인 상태에서만 표시) -->
-        <div class="card" id="accountCard" style="display:none">
+  <!-- Signup modal -->
+  <div id="signupOverlay" class="overlay">
+    <div class="modal" style="width:min(560px,96vw)">
+      <div class="modalHeader">
+        <h3>회원가입</h3>
+        <button id="closeSignupBtn">닫기</button>
+      </div>
+      <div class="modalBody">
+        <div class="card">
+          <label>닉네임 (필수, 중복 불가)</label>
+          <input id="signupNickname" placeholder="예: jaewon" maxlength="20" />
+          <label>이메일</label>
+          <input id="signupEmail" type="email" placeholder="you@example.com" />
+          <label>비밀번호 (6자 이상)</label>
+          <input id="signupPassword" type="password" placeholder="••••••••" />
+          <div class="row">
+            <button id="signupBtn" class="primary">회원가입</button>
+          </div>
+          <div class="hint" style="margin-top:10px">
+            닉네임 없이 가입 시도하면 DB 트리거가 가입 자체를 거절함.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account modal -->
+  <div id="accountOverlay" class="overlay">
+    <div class="modal" style="width:min(640px,96vw)">
+      <div class="modalHeader">
+        <h3>계정</h3>
+        <button id="closeAccountBtn">닫기</button>
+      </div>
+      <div class="modalBody">
+        <div class="card">
           <div class="hint">현재 로그인</div>
-          <div id="accountLine" style="font-weight:900;margin-top:6px"></div>
+          <div id="accountLine" style="font-weight:1000;margin-top:6px"></div>
 
           <div style="margin-top:12px">
             <label>닉네임</label>
-            <input id="nickname" type="text" placeholder="예: jaewon" maxlength="20" />
+            <input id="nickname" maxlength="20" />
             <div class="row">
-              <button id="saveNickBtn" class="primary">닉네임 저장</button>
+              <button id="saveNickBtn" class="primary">닉네임 변경</button>
               <button id="logoutBtn">로그아웃</button>
             </div>
             <div class="hint" style="margin-top:8px">
-              닉네임은 공개돼. 중복이면 저장이 거절됨.
+              닉네임은 공개되고, 중복이면 저장 실패.
             </div>
           </div>
 
           <div class="section">
-            <h4 class="sectionTitle">내 활동 통계</h4>
+            <h4 class="sectionTitle">내 통계</h4>
             <div class="statGrid">
               <div class="stat">
                 <div class="k">내가 추가한 가게</div>
@@ -256,562 +394,690 @@
               </div>
             </div>
           </div>
-        </div>
 
+          <div class="hint" style="margin-top:10px">
+            닉네임이 비어 있으면 “추가/저장/수정/삭제” 버튼이 막힘.
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <div id="toast" class="toast"><span class="dot"></span><span id="toastText">.</span></div>
 
-  <script>
-    /*********** 너가 교체할 값 ***********/
-    const SB_URL = "https://tqybsmrmzxnfuwypbazn.supabase.co";
-    const SB_KEY = "sb_publishable_NOdwos9jU0jwL0AzvZrHHg_KSH5f2e1";
-    /*************************************/
+<script>
+/*********** 교체 ***********/
+const SB_URL = "https://tqybsmrmzxnfuwypbazn.supabase.co";
+const SB_KEY = "sb_publishable_NOdwos9jU0jwL0AzvZrHHg_KSH5f2e1";
+/****************************/
 
-    const $ = (id) => document.getElementById(id);
-    const esc = (s)=>String(s??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
-    const todayISO = () => new Date().toISOString().slice(0,10);
-    const shortId = (id) => (id ? String(id).slice(0,8) : '');
+const $ = (id) => document.getElementById(id);
+const esc = (s)=>String(s??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
+const todayISO = () => new Date().toISOString().slice(0,10);
 
-    function toast(msg){
-      $('toastText').textContent = msg;
-      $('toast').classList.add('show');
-      clearTimeout(toast._tm);
-      toast._tm = setTimeout(()=> $('toast').classList.remove('show'), 2400);
+function toast(msg){
+  $('toastText').textContent = msg;
+  $('toast').classList.add('show');
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(()=> $('toast').classList.remove('show'), 2400);
+}
+function open(el){ el.classList.add('open'); }
+function close(el){ el.classList.remove('open'); }
+
+const state = {
+  sb: null,
+  user: null,
+  myProfile: null,              // {id, nickname}
+  nameByUserId: new Map(),       // user_id -> nickname
+  map: null,
+  geocoder: null,
+  places: [],
+  markers: new Map(),
+  selectedPlace: null,
+  editingVisitId: null
+};
+
+function configured(){
+  return SB_URL && SB_KEY && !SB_URL.includes("YOUR_") && !SB_KEY.includes("YOUR_");
+}
+
+function hasNickname(){
+  return !!(state.myProfile?.nickname && String(state.myProfile.nickname).trim());
+}
+
+function requireNicknameOrGuide(){
+  if(!state.user){
+    toast('로그인 필요');
+    open($('loginOverlay'));
+    return false;
+  }
+  if(!hasNickname()){
+    toast('닉네임이 필요해. 계정에서 설정해줘.');
+    open($('accountOverlay'));
+    return false;
+  }
+  return true;
+}
+
+function displayName(user_id, fallbackEmail){
+  const nick = state.nameByUserId.get(user_id);
+  if(nick && String(nick).trim()) return nick;
+  if(fallbackEmail) return fallbackEmail;
+  return 'user';
+}
+
+async function fetchNicknames(userIds){
+  const ids = [...new Set((userIds || []).filter(Boolean))].filter(id => !state.nameByUserId.has(id));
+  if(ids.length === 0) return;
+
+  const { data, error } = await state.sb
+    .from('profiles')
+    .select('id, nickname')
+    .in('id', ids);
+
+  if(error){ console.error(error); return; }
+
+  for(const row of (data ?? [])){
+    state.nameByUserId.set(row.id, row.nickname || '');
+  }
+}
+
+async function ensureMyProfile(){
+  const u = state.user;
+  if(!u) return;
+
+  // profile 읽기
+  const { data, error } = await state.sb
+    .from('profiles')
+    .select('id, nickname')
+    .eq('id', u.id)
+    .maybeSingle();
+
+  if(error){ console.error(error); }
+
+  state.myProfile = data ?? { id: u.id, nickname: '' };
+  state.nameByUserId.set(u.id, state.myProfile.nickname || '');
+}
+
+async function loadMyStats(){
+  if(!state.user) return;
+
+  const p = await state.sb
+    .from('places')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', state.user.id);
+
+  const v = await state.sb
+    .from('visits')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', state.user.id);
+
+  $('myPlacesCount').textContent = String(p.count ?? 0);
+  $('myVisitsCount').textContent = String(v.count ?? 0);
+}
+
+function updateDockUI(){
+  const loggedIn = !!state.user;
+
+  $('loginOpenBtn').style.display = loggedIn ? 'none' : 'inline-flex';
+  $('signupOpenBtn').style.display = loggedIn ? 'none' : 'inline-flex';
+  $('accountOpenBtn').style.display = loggedIn ? 'inline-flex' : 'none';
+
+  if(loggedIn){
+    const nick = hasNickname() ? state.myProfile.nickname : '계정';
+    $('accountOpenBtn').textContent = nick;
+  }
+
+  // add 버튼은 로그인+닉네임 있을 때만 “실제 추가 진행”
+  // (버튼 자체는 보이되, 누르면 안내)
+  $('addBtn').disabled = false;
+
+  // 방문기 에디터 노출/숨김
+  if(state.selectedPlace){
+    if(loggedIn && hasNickname()){
+      $('editorWrap').style.display = 'block';
+      $('needLoginHint').style.display = 'none';
+    }else{
+      $('editorWrap').style.display = 'none';
+      $('needLoginHint').style.display = 'block';
     }
-    function open(el){ el.classList.add('open'); el.setAttribute('aria-hidden','false'); }
-    function close(el){ el.classList.remove('open'); el.setAttribute('aria-hidden','true'); }
+  }
+}
 
-    const state = {
-      sb: null,
-      user: null,
-      myProfile: null,              // {id, nickname}
-      nameByUserId: new Map(),       // user_id -> nickname
-      map: null,
-      geocoder: null,
-      places: [],
-      markers: new Map(),
-      selectedPlace: null
-    };
+async function initSupabase(){
+  if(!configured()){ toast('Supabase URL/KEY를 index.html에 넣어줘'); return; }
+  if(!window.supabase?.createClient){ toast('Supabase SDK 로딩 실패'); return; }
 
-    function configured(){
-      return SB_URL && SB_KEY && !SB_URL.includes("YOUR_") && !SB_KEY.includes("YOUR_");
+  state.sb = window.supabase.createClient(SB_URL, SB_KEY, {
+    auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+  });
+
+  const { data } = await state.sb.auth.getSession();
+  state.user = data?.session?.user ?? null;
+  if(state.user){
+    await ensureMyProfile();
+  }
+  updateDockUI();
+
+  state.sb.auth.onAuthStateChange(async (_event, session) => {
+    state.user = session?.user ?? null;
+    state.myProfile = null;
+
+    if(state.user){
+      await ensureMyProfile();
+      await loadMyStats();
+    }else{
+      $('myPlacesCount').textContent='-';
+      $('myVisitsCount').textContent='-';
     }
 
-    async function initSupabase(){
-      if(!configured()){ toast('Supabase URL/KEY를 index.html에 넣어줘'); return; }
-      if(!window.supabase?.createClient){ toast('Supabase SDK 로딩 실패'); return; }
+    updateDockUI();
+    if(state.selectedPlace) await loadVisitsAndRender(state.selectedPlace.id);
+  });
+}
 
-      state.sb = window.supabase.createClient(SB_URL, SB_KEY, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+function initMap(){
+  if(!(window.kakao && window.kakao.maps)){
+    toast('카카오 지도 SDK 로딩 실패 (키/도메인/카카오맵 ON 확인)');
+    return;
+  }
+  const center = new kakao.maps.LatLng(37.5665, 126.9780);
+  state.map = new kakao.maps.Map($('map'), { center, level: 6 });
+  state.geocoder = new kakao.maps.services.Geocoder();
+}
+
+async function loadPlaces(){
+  const { data, error } = await state.sb
+    .from('places')
+    .select('*')
+    .order('created_at', { ascending:false });
+
+  if(error){ console.error(error); toast('places 로딩 실패'); return; }
+  state.places = data ?? [];
+  await fetchNicknames(state.places.map(p => p.user_id));
+  renderMarkers();
+}
+
+function clearMarkers(){
+  for(const m of state.markers.values()) m.setMap(null);
+  state.markers.clear();
+}
+
+function renderMarkers(){
+  if(!state.map) return;
+  clearMarkers();
+
+  for(const p of state.places){
+    const marker = new kakao.maps.Marker({
+      position: new kakao.maps.LatLng(p.lat, p.lng)
+    });
+    marker.setMap(state.map);
+    kakao.maps.event.addListener(marker, 'click', ()=> openPlace(p.id));
+    state.markers.set(p.id, marker);
+  }
+}
+
+function showPlaceCard(show){
+  $('placeCard').style.display = show ? 'block' : 'none';
+}
+
+function resetEditor(){
+  state.editingVisitId = null;
+  $('editorTitle').textContent = '방문기 쓰기';
+  $('saveVisitBtn').textContent = '저장';
+  $('cancelEditBtn').style.display = 'none';
+  $('visitDate').value = todayISO();
+  $('visitRating').value = '';
+  $('visitContent').value = '';
+}
+
+async function openPlace(placeId){
+  const place = state.places.find(p => p.id === placeId);
+  if(!place) return;
+
+  state.selectedPlace = place;
+  await fetchNicknames([place.user_id]);
+
+  $('placeName').textContent = place.name;
+  $('placeAddr').textContent = place.address;
+  $('placeMeta').textContent = `추가자: ${displayName(place.user_id)}`;
+
+  showPlaceCard(true);
+  resetEditor();
+  updateDockUI();
+
+  const pos = new kakao.maps.LatLng(place.lat, place.lng);
+  state.map.setCenter(pos);
+  state.map.setLevel(Math.min(state.map.getLevel(), 4));
+
+  await loadVisitsAndRender(place.id);
+}
+
+async function loadVisitsAndRender(placeId){
+  const wrap = $('visits');
+  wrap.innerHTML = '<div class="hint">불러오는 중…</div>';
+
+  const { data, error } = await state.sb
+    .from('visits')
+    .select('*')
+    .eq('place_id', placeId)
+    .order('visited_at', { ascending:false })
+    .order('created_at', { ascending:false });
+
+  if(error){ console.error(error); toast('visits 로딩 실패'); wrap.innerHTML=''; return; }
+
+  const items = data ?? [];
+  await fetchNicknames(items.map(v => v.user_id));
+
+  if(items.length === 0){
+    wrap.innerHTML = '<div class="hint">아직 방문 기록 없음.</div>';
+    return;
+  }
+
+  wrap.innerHTML = '';
+  for(const v of items){
+    const author = displayName(v.user_id, v.author_email);
+    const isMine = !!(state.user && v.user_id === state.user.id);
+
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <div class="visitTop">
+        <div style="font-weight:1000">${esc(v.visited_at)}</div>
+        <div class="badge">${v.rating == null ? '평점 없음' : ('평점 ' + esc(v.rating))}</div>
+      </div>
+      <div class="sub" style="margin-top:6px">작성자: ${esc(author)}</div>
+      <div class="visitContent">${esc(v.content || '')}</div>
+      ${isMine ? `
+        <div class="miniActions">
+          <button data-act="edit">수정</button>
+          <button data-act="del">삭제</button>
+        </div>
+      ` : ''}
+    `;
+
+    if(isMine){
+      div.querySelector('[data-act="edit"]').addEventListener('click', ()=>{
+        if(!requireNicknameOrGuide()) return;
+        state.editingVisitId = v.id;
+        $('editorTitle').textContent = '방문기 수정';
+        $('saveVisitBtn').textContent = '수정 저장';
+        $('cancelEditBtn').style.display = 'inline-flex';
+        $('visitDate').value = v.visited_at || todayISO();
+        $('visitRating').value = (v.rating ?? '');
+        $('visitContent').value = v.content || '';
+        toast('편집 모드');
       });
 
-      const { data } = await state.sb.auth.getSession();
-      state.user = data?.session?.user ?? null;
-
-      if(state.user){
-        await ensureMyProfile();
-      }
-      updateAuthUI();
-
-      state.sb.auth.onAuthStateChange(async (_event, session) => {
-        state.user = session?.user ?? null;
-        state.myProfile = null;
-
-        if(state.user){
-          await ensureMyProfile();
-        }
-        updateAuthUI();
-
-        // 로그인/로그아웃 직후: 통계 갱신 + (선택된 place 있으면) 방문기 갱신
-        if(state.user){
-          await loadMyStats();
-        } else {
-          $('myPlacesCount').textContent = '-';
-          $('myVisitsCount').textContent = '-';
-        }
-        if(state.selectedPlace) await loadVisitsAndRender(state.selectedPlace.id);
+      div.querySelector('[data-act="del"]').addEventListener('click', async ()=>{
+        if(!requireNicknameOrGuide()) return;
+        if(!confirm('이 방문기를 삭제할까?')) return;
+        const { error } = await state.sb.from('visits').delete().eq('id', v.id);
+        if(error){ console.error(error); toast('삭제 실패'); return; }
+        toast('삭제됨');
+        await loadVisitsAndRender(placeId);
+        await loadMyStats();
+        resetEditor();
       });
     }
 
-    function displayName(user_id, fallbackEmail){
-      const nick = state.nameByUserId.get(user_id);
-      if(nick && String(nick).trim()) return nick;
-      if(fallbackEmail) return fallbackEmail;
-      return `user:${shortId(user_id)}`;
-    }
+    wrap.appendChild(div);
+  }
+}
 
-    async function fetchNicknames(userIds){
-      const ids = [...new Set((userIds || []).filter(Boolean))].filter(id => !state.nameByUserId.has(id));
-      if(ids.length === 0) return;
+function haversineMeters(lat1,lng1,lat2,lng2){
+  const R = 6371000;
+  const toRad = (x)=> x*Math.PI/180;
+  const dLat = toRad(lat2-lat1);
+  const dLng = toRad(lng2-lng1);
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*(Math.sin(dLng/2)**2);
+  const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R*c;
+}
 
-      const { data, error } = await state.sb
-        .from('profiles')
-        .select('id, nickname')
-        .in('id', ids);
-
-      if(error){ console.error(error); return; }
-
-      for(const row of (data ?? [])){
-        state.nameByUserId.set(row.id, row.nickname || '');
-      }
-    }
-
-    async function ensureMyProfile(){
-      // profiles row가 없으면 만들어두고, 있으면 읽어오기
-      const u = state.user;
-      if(!u || !state.sb) return;
-
-      // upsert로 강제 생성(닉네임은 null이어도 됨)
-      await state.sb.from('profiles').upsert({ id: u.id }, { onConflict: 'id' });
-
-      const { data } = await state.sb
-        .from('profiles')
-        .select('id, nickname')
-        .eq('id', u.id)
-        .maybeSingle();
-
-      state.myProfile = data ?? { id: u.id, nickname: null };
-      state.nameByUserId.set(u.id, state.myProfile.nickname || '');
-    }
-
-    async function loadMyStats(){
-      const u = state.user;
-      if(!u) return;
-
-      const p = await state.sb
-        .from('places')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', u.id);
-
-      const v = await state.sb
-        .from('visits')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', u.id);
-
-      $('myPlacesCount').textContent = String(p.count ?? 0);
-      $('myVisitsCount').textContent = String(v.count ?? 0);
-    }
-
-    function updateAuthUI(){
-      const u = state.user;
-
-      if(u){
-        const nick = state.myProfile?.nickname ? state.myProfile.nickname : (u.email ?? '계정');
-        $('authBtn').textContent = nick;
-
-        $('loginCard').style.display = 'none';
-        $('accountCard').style.display = 'block';
-        $('authTitle').textContent = '계정';
-
-        $('accountLine').textContent = u.email ?? '';
-        $('nickname').value = state.myProfile?.nickname ?? '';
-
-        $('editor').style.display = 'block';
-        $('loginHint').style.display = 'none';
-      } else {
-        $('authBtn').textContent = '로그인';
-
-        $('loginCard').style.display = 'block';
-        $('accountCard').style.display = 'none';
-        $('authTitle').textContent = '로그인 / 회원가입';
-
-        $('editor').style.display = 'none';
-        $('loginHint').style.display = 'block';
-      }
-    }
-
-    function initMap(){
-      if(!(window.kakao && window.kakao.maps)){
-        toast('카카오 지도 SDK 로딩 실패 (키/도메인/카카오맵 ON 확인)');
+function isSeoulByCoord(lat, lng){
+  return new Promise((resolve) => {
+    state.geocoder.coord2RegionCode(lng, lat, (res, status) => {
+      if(status !== kakao.maps.services.Status.OK || !res || res.length === 0){
+        resolve(true);
         return;
       }
-      const center = new kakao.maps.LatLng(37.5665, 126.9780);
-      state.map = new kakao.maps.Map($('map'), { center, level: 6 });
-      state.geocoder = new kakao.maps.services.Geocoder();
+      const any = res.find(x => x.region_1depth_name) || res[0];
+      resolve((any.region_1depth_name || '').includes('서울'));
+    });
+  });
+}
+
+async function findDuplicateByNameAddress(name, address){
+  const { data, error } = await state.sb
+    .from('places')
+    .select('id, lat, lng')
+    .eq('name', name)
+    .eq('address', address)
+    .limit(1);
+
+  if(error){ console.error(error); return null; }
+  return (data && data.length) ? data[0] : null;
+}
+
+async function findDuplicateByProximity(lat, lng, thresholdMeters = 30){
+  // bounding box로 좁혀서 가져온 뒤 실제 거리 계산
+  const dLat = 0.0006; // 약 66m
+  const dLng = 0.00075; // 서울 위도 기준 대략 66m 근사
+  const { data, error } = await state.sb
+    .from('places')
+    .select('id, lat, lng')
+    .gte('lat', lat - dLat)
+    .lte('lat', lat + dLat)
+    .gte('lng', lng - dLng)
+    .lte('lng', lng + dLng)
+    .limit(40);
+
+  if(error){ console.error(error); return null; }
+
+  let best = null;
+  let bestDist = Infinity;
+  for(const p of (data ?? [])){
+    const dist = haversineMeters(lat, lng, p.lat, p.lng);
+    if(dist < bestDist){
+      bestDist = dist;
+      best = p;
     }
+  }
+  if(best && bestDist <= thresholdMeters) return { ...best, dist: bestDist };
+  return null;
+}
 
-    async function loadPlaces(){
-      if(!state.sb) return;
+async function createPlace({ name, address, lat, lng }){
+  if(!requireNicknameOrGuide()) return null;
 
-      const { data, error } = await state.sb
-        .from('places')
-        .select('*')
-        .order('created_at', { ascending: false });
+  // 1) 이름+주소 중복
+  const dup1 = await findDuplicateByNameAddress(name, address);
+  if(dup1){
+    toast('이미 등록된 가게야. 그쪽으로 이동할게.');
+    return { id: dup1.id, existed:true };
+  }
 
-      if(error){ console.error(error); toast('places 로딩 실패'); return; }
+  // 2) 좌표 근접 중복
+  const dup2 = await findDuplicateByProximity(lat, lng, 30);
+  if(dup2){
+    toast(`근처(${Math.round(dup2.dist)}m)에 이미 등록된 가게가 있어. 그쪽으로 이동할게.`);
+    return { id: dup2.id, existed:true };
+  }
 
-      state.places = data ?? [];
-      await fetchNicknames(state.places.map(p => p.user_id));
-      renderMarkers();
+  const payload = { user_id: state.user.id, name, address, lat, lng };
+
+  const { data, error } = await state.sb
+    .from('places')
+    .insert(payload)
+    .select('*')
+    .single();
+
+  if(error){
+    console.error(error);
+    // 유니크 제약 위반 같은 경우: 다시 찾아서 이동
+    const fallback = await findDuplicateByNameAddress(name, address);
+    if(fallback){
+      toast('이미 등록된 가게야. 그쪽으로 이동할게.');
+      return { id: fallback.id, existed:true };
     }
+    toast(error.message || '가게 저장 실패');
+    return null;
+  }
 
-    function clearMarkers(){
-      for(const m of state.markers.values()) m.setMap(null);
-      state.markers.clear();
-    }
+  return { ...data, existed:false };
+}
 
-    function renderMarkers(){
-      if(!state.map) return;
-      clearMarkers();
+async function saveVisit(){
+  if(!requireNicknameOrGuide()) return;
+  if(!state.selectedPlace){ toast('가게부터 선택'); return; }
 
-      for(const p of state.places){
-        const marker = new kakao.maps.Marker({
-          position: new kakao.maps.LatLng(p.lat, p.lng)
-        });
-        marker.setMap(state.map);
-        kakao.maps.event.addListener(marker, 'click', ()=> openPlace(p.id));
-        state.markers.set(p.id, marker);
-      }
-    }
+  const visited_at = $('visitDate').value || todayISO();
+  const ratingRaw = $('visitRating').value;
+  const rating = (ratingRaw === '') ? null : Math.max(0, Math.min(5, Number(ratingRaw)));
+  const content = ($('visitContent').value || '').trim();
+  if(!content){ toast('방문기 내용을 써줘'); return; }
 
-    function closePanel(){
-      close($('panel'));
-      state.selectedPlace = null;
-      $('placeName').textContent = '가게 선택해줘';
-      $('placeAddr').textContent = '마커 누르면 뜸';
-      $('placeMeta').textContent = '';
-      $('visits').innerHTML = '';
-      $('panelHint').textContent = '마커 클릭하면 방문 기록이 보여.';
-    }
+  $('saveVisitBtn').disabled = true;
+  try{
+    if(state.editingVisitId){
+      const { error } = await state.sb
+        .from('visits')
+        .update({ visited_at, rating, content })
+        .eq('id', state.editingVisitId);
 
-    async function openPlace(placeId){
-      const place = state.places.find(p => p.id === placeId);
-      if(!place) return;
+      if(error){ console.error(error); toast('수정 실패'); return; }
+      toast('수정됨');
+      resetEditor();
+    }else{
+      const payload = {
+        user_id: state.user.id,
+        author_email: state.user.email || null,
+        place_id: state.selectedPlace.id,
+        visited_at,
+        rating,
+        content
+      };
 
-      state.selectedPlace = place;
-      await fetchNicknames([place.user_id]);
-
-      $('placeName').textContent = place.name;
-      $('placeAddr').textContent = place.address;
-
-      const authorName = displayName(place.user_id);
-      $('placeMeta').textContent = `추가자: ${authorName}`;
-
-      $('panelHint').textContent = '방문기는 공개. 로그인하면 작성 가능.';
-      $('visitDate').value = todayISO();
-      $('visitRating').value = '';
+      const { error } = await state.sb.from('visits').insert(payload);
+      if(error){ console.error(error); toast('저장 실패'); return; }
+      toast('저장됨');
       $('visitContent').value = '';
-
-      open($('panel'));
-
-      const pos = new kakao.maps.LatLng(place.lat, place.lng);
-      state.map.setCenter(pos);
-      state.map.setLevel(Math.min(state.map.getLevel(), 4));
-
-      await loadVisitsAndRender(place.id);
+      $('visitRating').value = '';
     }
 
-    async function loadVisitsAndRender(placeId){
-      if(!state.sb) return;
+    await loadVisitsAndRender(state.selectedPlace.id);
+    await loadMyStats();
+  } finally {
+    $('saveVisitBtn').disabled = false;
+  }
+}
 
-      const wrap = $('visits');
-      wrap.innerHTML = '<div class="hint">불러오는 중…</div>';
+/* ===== UI events ===== */
+window.addEventListener('DOMContentLoaded', () => {
+  $('visitDate').value = todayISO();
 
-      const { data, error } = await state.sb
-        .from('visits')
-        .select('*')
-        .eq('place_id', placeId)
-        .order('visited_at', { ascending: false })
-        .order('created_at', { ascending: false });
+  $('closePlaceBtn').addEventListener('click', ()=>{
+    showPlaceCard(false);
+    state.selectedPlace = null;
+    resetEditor();
+  });
 
-      if(error){ console.error(error); toast('visits 로딩 실패'); wrap.innerHTML=''; return; }
+  $('addBtn').addEventListener('click', ()=>{
+    if(!requireNicknameOrGuide()) return;
+    open($('addOverlay'));
+  });
+  $('closeAddBtn').addEventListener('click', ()=> close($('addOverlay')));
 
-      const items = data ?? [];
-      await fetchNicknames(items.map(v => v.user_id));
+  $('loginOpenBtn').addEventListener('click', ()=> open($('loginOverlay')));
+  $('closeLoginBtn').addEventListener('click', ()=> close($('loginOverlay')));
 
-      if(items.length === 0){
-        wrap.innerHTML = '<div class="hint">아직 방문 기록 없음.</div>';
-        return;
-      }
+  $('signupOpenBtn').addEventListener('click', ()=> open($('signupOverlay')));
+  $('closeSignupBtn').addEventListener('click', ()=> close($('signupOverlay')));
 
-      wrap.innerHTML = '';
-      for(const v of items){
-        const author = displayName(v.user_id, v.author_email);
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `
-          <div class="visitTop">
-            <div style="font-weight:800">${esc(v.visited_at)}</div>
-            <div class="badge">${v.rating == null ? '평점 없음' : ('평점 ' + esc(v.rating))}</div>
-          </div>
-          <div class="sub" style="margin-top:6px">작성자: ${esc(author)}</div>
-          <div class="visitContent">${esc(v.content || '')}</div>
-        `;
-        wrap.appendChild(div);
-      }
+  $('accountOpenBtn').addEventListener('click', async ()=>{
+    open($('accountOverlay'));
+    await loadMyStats();
+    $('accountLine').textContent = state.user?.email || '';
+    $('nickname').value = state.myProfile?.nickname || '';
+  });
+  $('closeAccountBtn').addEventListener('click', ()=> close($('accountOverlay')));
+
+  $('cancelEditBtn').addEventListener('click', ()=>{
+    resetEditor();
+    toast('편집 취소');
+  });
+
+  $('saveVisitBtn').addEventListener('click', saveVisit);
+
+  $('loginBtn').addEventListener('click', async ()=>{
+    const email = ($('loginEmail').value || '').trim();
+    const password = $('loginPassword').value || '';
+    if(!email || !password){ toast('이메일/비번 입력'); return; }
+
+    $('loginBtn').disabled = true;
+    try{
+      const { error } = await state.sb.auth.signInWithPassword({ email, password });
+      if(error){ console.error(error); toast(error.message || '로그인 실패'); return; }
+      toast('로그인 됨');
+      close($('loginOverlay'));
+      await ensureMyProfile();
+      await loadMyStats();
+      updateDockUI();
+    } finally {
+      $('loginBtn').disabled = false;
     }
+  });
 
-    function isSeoulByCoord(lat, lng){
-      return new Promise((resolve) => {
-        state.geocoder.coord2RegionCode(lng, lat, (res, status) => {
-          if(status !== kakao.maps.services.Status.OK || !res || res.length === 0){
-            resolve(true);
-            return;
-          }
-          const any = res.find(x => x.region_1depth_name) || res[0];
-          resolve((any.region_1depth_name || '').includes('서울'));
-        });
+  $('signupBtn').addEventListener('click', async ()=>{
+    const nickname = ($('signupNickname').value || '').trim();
+    const email = ($('signupEmail').value || '').trim();
+    const password = $('signupPassword').value || '';
+
+    if(!nickname){ toast('닉네임은 필수'); return; }
+    if(!email || !password){ toast('이메일/비번 입력'); return; }
+
+    $('signupBtn').disabled = true;
+    try{
+      // nickname은 user metadata로 전달됨 -> DB 트리거가 profiles 생성/검증
+      const { error } = await state.sb.auth.signUp({
+        email, password,
+        options: { data: { nickname } }
       });
-    }
-
-    async function findDuplicatePlace(name, address){
-      // 같은 name+address가 이미 있으면 그 row 반환
-      const { data, error } = await state.sb
-        .from('places')
-        .select('id')
-        .eq('name', name)
-        .eq('address', address)
-        .limit(1);
-
-      if(error){ console.error(error); return null; }
-      return (data && data.length > 0) ? data[0] : null;
-    }
-
-    async function createPlace({ name, address, lat, lng }){
-      const u = state.user;
-      if(!u){ toast('가게 추가는 로그인 필요'); return null; }
-
-      // 1) 중복 확인
-      const dup = await findDuplicatePlace(name, address);
-      if(dup){
-        toast('이미 등록된 가게야. 그쪽으로 이동할게.');
-        return { id: dup.id, existed: true };
-      }
-
-      // 2) insert (user_id 반드시 포함)
-      const payload = { user_id: u.id, name, address, lat, lng };
-
-      const { data, error } = await state.sb
-        .from('places')
-        .insert(payload)
-        .select('*')
-        .single();
 
       if(error){
-        // 유니크 제약(places_name_address_unique) 위반도 여기로 들어옴
         console.error(error);
-        toast(error.message || '가게 저장 실패');
-        return null;
+        toast(error.message || '회원가입 실패');
+        return;
       }
-      return { ...data, existed: false };
+      toast('회원가입 완료. 이제 로그인해줘.');
+      close($('signupOverlay'));
+      open($('loginOverlay'));
+    } finally {
+      $('signupBtn').disabled = false;
     }
+  });
 
-    async function saveVisit(){
-      const u = state.user;
-      if(!u){ toast('로그인 필요'); return; }
-      if(!state.selectedPlace){ toast('가게부터 선택'); return; }
+  $('saveNickBtn').addEventListener('click', async ()=>{
+    if(!state.user){ toast('로그인 필요'); return; }
+    const nickname = ($('nickname').value || '').trim();
+    if(!nickname){ toast('닉네임은 비울 수 없음'); return; }
 
-      const visited_at = $('visitDate').value || todayISO();
-      const ratingRaw = $('visitRating').value;
-      const rating = (ratingRaw === '') ? null : Math.max(0, Math.min(5, Number(ratingRaw)));
-      const content = ($('visitContent').value || '').trim();
+    $('saveNickBtn').disabled = true;
+    try{
+      const { error } = await state.sb
+        .from('profiles')
+        .update({ nickname })
+        .eq('id', state.user.id);
 
-      if(!content){ toast('방문기 내용을 써줘'); return; }
-
-      $('saveVisitBtn').disabled = true;
-      try{
-        const payload = {
-          user_id: u.id,
-          author_email: u.email || null,     // DB에 남겨두되, UI는 닉네임으로 보여줌
-          place_id: state.selectedPlace.id,
-          visited_at,
-          rating,
-          content
-        };
-
-        const { error } = await state.sb.from('visits').insert(payload);
-        if(error){ console.error(error); toast(error.message || '저장 실패'); return; }
-
-        $('visitContent').value = '';
-        $('visitRating').value = '';
-        toast('저장됨');
-        await loadVisitsAndRender(state.selectedPlace.id);
-        await loadMyStats();
-      } finally {
-        $('saveVisitBtn').disabled = false;
+      if(error){
+        console.error(error);
+        toast('닉네임 변경 실패(중복일 수 있음)');
+        return;
       }
+
+      state.myProfile = { id: state.user.id, nickname };
+      state.nameByUserId.set(state.user.id, nickname);
+      toast('닉네임 변경됨');
+      updateDockUI();
+
+      // 화면 반영
+      await loadPlaces();
+      if(state.selectedPlace) await openPlace(state.selectedPlace.id);
+    } finally {
+      $('saveNickBtn').disabled = false;
     }
+  });
 
-    // ===== 이벤트 바인딩 =====
-    window.addEventListener('DOMContentLoaded', () => {
-      $('visitDate').value = todayISO();
+  $('logoutBtn').addEventListener('click', async ()=>{
+    await state.sb.auth.signOut();
+    toast('로그아웃');
+    close($('accountOverlay'));
+  });
 
-      $('addBtn').addEventListener('click', () => {
-        if(!state.user){
-          toast('추가는 로그인 필요');
-          open($('authOverlay'));
-          return;
-        }
-        open($('addOverlay'));
-      });
-      $('closeAddBtn').addEventListener('click', ()=> close($('addOverlay')));
+  $('addrSearchBtn').addEventListener('click', ()=>{
+    if(!state.geocoder){ toast('지도 준비 안 됨'); return; }
 
-      $('authBtn').addEventListener('click', async ()=> {
-        open($('authOverlay'));
-        if(state.user){
-          await loadMyStats();
-        }
-      });
-      $('closeAuthBtn').addEventListener('click', ()=> close($('authOverlay')));
+    const name = ($('newName').value || '').trim();
+    const q = ($('newAddr').value || '').trim();
+    if(!name){ toast('가게 이름부터'); return; }
+    if(!q){ toast('주소(검색어)부터'); return; }
 
-      $('closePanelBtn').addEventListener('click', closePanel);
-      $('saveVisitBtn').addEventListener('click', saveVisit);
+    $('geoStatus').textContent = '찾는 중…';
+    $('results').innerHTML = '';
 
-      $('loginBtn').addEventListener('click', async () => {
-        const email = ($('email').value || '').trim();
-        const password = $('password').value || '';
-        if(!email || !password){ toast('이메일/비번 입력'); return; }
+    state.geocoder.addressSearch(q, (result, status) => {
+      if(status !== kakao.maps.services.Status.OK || !result || result.length === 0){
+        $('geoStatus').textContent = '결과 없음';
+        return;
+      }
 
-        $('loginBtn').disabled = true;
-        try{
-          const { error } = await state.sb.auth.signInWithPassword({ email, password });
-          if(error){ console.error(error); toast(error.message || '로그인 실패'); return; }
-          toast('로그인 됨');
-          close($('authOverlay'));
-          await ensureMyProfile();
-          await loadMyStats();
-        } finally {
-          $('loginBtn').disabled = false;
-        }
-      });
+      $('geoStatus').textContent = `후보 ${result.length}개`;
 
-      $('signupBtn').addEventListener('click', async () => {
-        const email = ($('email').value || '').trim();
-        const password = $('password').value || '';
-        if(!email || !password){ toast('이메일/비번 입력'); return; }
+      for(const r of result){
+        const lat = Number(r.y);
+        const lng = Number(r.x);
+        const addr = (r.address_name || q).trim();
 
-        $('signupBtn').disabled = true;
-        try{
-          const { error } = await state.sb.auth.signUp({ email, password });
-          if(error){ console.error(error); toast(error.message || '회원가입 실패'); return; }
-          toast('회원가입 완료. 바로 로그인해줘.');
-        } finally {
-          $('signupBtn').disabled = false;
-        }
-      });
+        const item = document.createElement('div');
+        item.className = 'resultItem';
+        item.innerHTML = `
+          <div class="t">${esc(name)}</div>
+          <div class="s">${esc(addr)}</div>
+          <div class="s">좌표: ${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+        `;
 
-      $('logoutBtn').addEventListener('click', async () => {
-        await state.sb.auth.signOut();
-        toast('로그아웃');
-      });
+        item.addEventListener('click', async ()=>{
+          const ok = await isSeoulByCoord(lat, lng);
+          if(!ok){ toast('서울이 아니면 저장 안 함'); return; }
 
-      $('saveNickBtn').addEventListener('click', async () => {
-        const u = state.user;
-        if(!u){ toast('로그인 필요'); return; }
-        const nickname = ($('nickname').value || '').trim();
-        if(!nickname){ toast('닉네임을 입력해줘'); return; }
+          const res = await createPlace({ name, address: addr, lat, lng });
+          if(!res) return;
 
-        $('saveNickBtn').disabled = true;
-        try{
-          const { error } = await state.sb
-            .from('profiles')
-            .upsert({ id: u.id, nickname }, { onConflict: 'id' });
+          close($('addOverlay'));
+          $('newName').value = '';
+          $('newAddr').value = '';
+          $('results').innerHTML = '';
+          $('geoStatus').textContent = '';
 
-          if(error){
-            console.error(error);
-            toast('닉네임 저장 실패(중복일 수 있음)');
-            return;
-          }
-          state.myProfile = { id: u.id, nickname };
-          state.nameByUserId.set(u.id, nickname);
-          updateAuthUI();
-
-          // 화면에 표시되는 “추가자/작성자”도 닉네임으로 바뀌게 갱신
           await loadPlaces();
-          if(state.selectedPlace) await openPlace(state.selectedPlace.id);
-
-          toast('닉네임 저장됨');
-        } finally {
-          $('saveNickBtn').disabled = false;
-        }
-      });
-
-      $('addrSearchBtn').addEventListener('click', () => {
-        if(!state.geocoder){ toast('지도 준비 안 됨'); return; }
-
-        const name = ($('newName').value || '').trim();
-        const q = ($('newAddr').value || '').trim();
-        if(!name){ toast('가게 이름부터'); return; }
-        if(!q){ toast('주소(검색어)부터'); return; }
-
-        $('geoStatus').textContent = '찾는 중…';
-        $('results').innerHTML = '';
-
-        state.geocoder.addressSearch(q, (result, status) => {
-          if(status !== kakao.maps.services.Status.OK || !result || result.length === 0){
-            $('geoStatus').textContent = '결과 없음';
-            return;
-          }
-
-          $('geoStatus').textContent = `후보 ${result.length}개`;
-
-          for(const r of result){
-            const lat = Number(r.y);
-            const lng = Number(r.x);
-            const addr = (r.address_name || q).trim();
-
-            const item = document.createElement('div');
-            item.className = 'resultItem';
-            item.innerHTML = `
-              <div class="t">${esc(name)}</div>
-              <div class="s">${esc(addr)}</div>
-              <div class="s">좌표: ${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
-            `;
-
-            item.addEventListener('click', async () => {
-              const ok = await isSeoulByCoord(lat, lng);
-              if(!ok){ toast('서울이 아니면 저장 안 함'); return; }
-
-              const created = await createPlace({ name, address: addr, lat, lng });
-              if(!created) return;
-
-              close($('addOverlay'));
-              $('newName').value = '';
-              $('newAddr').value = '';
-              $('results').innerHTML = '';
-              $('geoStatus').textContent = '';
-
-              await loadPlaces();
-
-              if(created.existed){
-                await openPlace(created.id);
-              } else {
-                toast('가게 추가됨');
-                await openPlace(created.id);
-                await loadMyStats();
-              }
-            });
-
-            $('results').appendChild(item);
+          await openPlace(res.id);
+          if(!res.existed){
+            await loadMyStats();
           }
         });
-      });
 
-      $('q').addEventListener('keydown', (e) => {
-        if(e.key !== 'Enter') return;
-        const q = ($('q').value || '').trim().toLowerCase();
-        if(!q) return;
-
-        const hit = state.places.find(p =>
-          (p.name || '').toLowerCase().includes(q) ||
-          (p.address || '').toLowerCase().includes(q)
-        );
-
-        if(!hit){ toast('검색 결과 없음'); return; }
-        openPlace(hit.id);
-      });
+        $('results').appendChild(item);
+      }
     });
+  });
 
-    // ===== 부팅 =====
-    window.addEventListener('load', async () => {
-      initMap();
-      await initSupabase();
-      await loadPlaces();
-      if(state.user) await loadMyStats();
-    });
-  </script>
+  $('q').addEventListener('keydown', (e)=>{
+    if(e.key !== 'Enter') return;
+    const q = ($('q').value || '').trim().toLowerCase();
+    if(!q) return;
+
+    const hit = state.places.find(p =>
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.address || '').toLowerCase().includes(q)
+    );
+    if(!hit){ toast('검색 결과 없음'); return; }
+    openPlace(hit.id);
+  });
+});
+
+/* ===== boot ===== */
+window.addEventListener('load', async ()=>{
+  initMap();
+  await initSupabase();
+  await loadPlaces();
+  if(state.user){
+    await ensureMyProfile();
+    await loadMyStats();
+    updateDockUI();
+  }
+});
+</script>
 </body>
 </html>
