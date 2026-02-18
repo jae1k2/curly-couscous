@@ -10,14 +10,15 @@
 
   <style>
     :root{
-      --bg:#0b0c10;
-      --card:rgba(20,22,30,.72);
-      --card2:rgba(24,27,37,.78);
-      --line:rgba(255,255,255,.10);
-      --text:#e9ecf1;
-      --muted:rgba(233,236,241,.62);
-      --accent:#9bb7ff;
-      --shadow:0 18px 50px rgba(0,0,0,.45);
+      --bg:#f4f6fb;
+      --card:rgba(255,255,255,.78);
+      --card2:rgba(255,255,255,.86);
+      --line:rgba(10,14,22,.10);
+      --line2:rgba(10,14,22,.14);
+      --text:#0f1524;
+      --muted:rgba(15,21,36,.62);
+      --accent:#2b60ff;
+      --shadow:0 18px 52px rgba(0,0,0,.16);
       --r:18px;
       --pill:999px;
     }
@@ -37,7 +38,7 @@
       border:1px solid var(--line);
       border-radius:22px;
       box-shadow:var(--shadow);
-      backdrop-filter:blur(12px);
+      backdrop-filter:blur(14px);
       z-index:1000;
     }
     .brand{
@@ -50,17 +51,17 @@
       padding:10px 12px;
       border-radius:var(--pill);
       border:1px solid var(--line);
-      background:rgba(0,0,0,.12);
+      background:rgba(255,255,255,.55);
       min-width:120px;
     }
     .search input{
       width:100%; border:0; outline:0; background:transparent;
       color:var(--text); font-size:14px;
     }
-    .search input::placeholder{color:rgba(233,236,241,.42)}
+    .search input::placeholder{color:rgba(15,21,36,.38)}
     button{
       border:1px solid var(--line);
-      background:rgba(0,0,0,.14);
+      background:rgba(255,255,255,.60);
       color:var(--text);
       padding:10px 12px;
       border-radius:var(--pill);
@@ -68,8 +69,8 @@
       white-space:nowrap;
     }
     button.primary{
-      background:rgba(155,183,255,.16);
-      border-color:rgba(155,183,255,.42);
+      background:rgba(43,96,255,.12);
+      border-color:rgba(43,96,255,.30);
     }
     button:disabled{opacity:.55; cursor:not-allowed}
     .dock .right{display:flex; gap:8px; align-items:center}
@@ -79,16 +80,17 @@
       button{padding:10px 10px}
     }
 
-    /* floating cards */
+    /* draggable floating windows */
     .float{
       position:fixed;
       background:var(--card2);
       border:1px solid var(--line);
       border-radius:22px;
       box-shadow:var(--shadow);
-      backdrop-filter:blur(12px);
-      z-index:1200;
+      backdrop-filter:blur(16px);
+      z-index:1600;
       overflow:hidden;
+      pointer-events:auto;
     }
     .floatHeader{
       display:flex; gap:10px; align-items:center;
@@ -100,19 +102,19 @@
       margin:0; font-size:14px; line-height:1.25;
       font-weight:950; flex:1; min-width:0;
     }
-    .sub{margin-top:6px; color:var(--muted); font-size:12px; line-height:1.35; word-break:break-word}
     .floatBody{padding:14px; max-height:62vh; overflow:auto}
     .hint{font-size:12px; color:var(--muted); line-height:1.45}
+    .sub{margin-top:6px; color:var(--muted); font-size:12px; line-height:1.35; word-break:break-word}
     .sectionTitle{
       margin:0 0 10px;
       font-size:12px;
-      color:rgba(233,236,241,.62);
+      color:rgba(15,21,36,.55);
       text-transform:uppercase;
       letter-spacing:.25px;
     }
 
-    .card{
-      background:rgba(0,0,0,.14);
+    .cardItem{
+      background:rgba(255,255,255,.62);
       border:1px solid var(--line);
       border-radius:16px;
       padding:12px;
@@ -123,18 +125,18 @@
       font-size:12px; padding:6px 10px;
       border-radius:var(--pill);
       border:1px solid var(--line);
-      background:rgba(0,0,0,.10);
+      background:rgba(255,255,255,.62);
       white-space:nowrap;
     }
     .visitContent{margin-top:10px; white-space:pre-wrap; font-size:13px; line-height:1.55}
     .miniActions{display:flex; gap:8px; margin-top:10px; justify-content:flex-end}
     .miniActions button{padding:8px 10px}
 
-    label{display:block; font-size:12px; color:rgba(233,236,241,.70); margin:0 0 6px}
+    label{display:block; font-size:12px; color:rgba(15,21,36,.68); margin:0 0 6px}
     input, textarea{
       width:100%;
       border:1px solid var(--line);
-      background:rgba(0,0,0,.16);
+      background:rgba(255,255,255,.72);
       color:var(--text);
       border-radius:14px;
       padding:10px;
@@ -148,7 +150,7 @@
     /* overlays */
     .overlay{
       position:fixed; inset:0;
-      background:rgba(0,0,0,.35);
+      background:rgba(10,14,22,.25);
       display:none; align-items:center; justify-content:center;
       padding:16px;
       z-index:2000;
@@ -160,7 +162,7 @@
       border:1px solid var(--line);
       border-radius:22px;
       box-shadow:var(--shadow);
-      backdrop-filter:blur(14px);
+      backdrop-filter:blur(18px);
       overflow:hidden;
     }
     .modalHeader{
@@ -175,10 +177,10 @@
       padding:12px;
       border:1px solid var(--line);
       border-radius:16px;
-      background:rgba(0,0,0,.14);
+      background:rgba(255,255,255,.70);
       cursor:pointer;
     }
-    .resultItem:hover{border-color:rgba(155,183,255,.48)}
+    .resultItem:hover{border-color:rgba(43,96,255,.28)}
     .resultItem .t{font-weight:950; font-size:13px; margin-bottom:4px}
     .resultItem .s{font-size:12px; color:var(--muted); line-height:1.35}
 
@@ -186,15 +188,15 @@
     .toast{
       position:fixed;
       left:50%; transform:translateX(-50%);
-      bottom:82px; /* dock 위 */
-      background:rgba(18,20,28,.88);
+      bottom:82px;
+      background:rgba(255,255,255,.80);
       border:1px solid var(--line);
       border-radius:var(--pill);
       padding:10px 14px;
       box-shadow:var(--shadow);
       display:none; gap:10px; align-items:center;
       z-index:3000;
-      backdrop-filter:blur(12px);
+      backdrop-filter:blur(14px);
     }
     .toast.show{display:flex}
     .dot{width:8px; height:8px; border-radius:50%; background:var(--accent)}
@@ -202,27 +204,24 @@
     /* Kakao marker popover content */
     .kpop{
       width:260px;
-      background:rgba(24,27,37,.92);
+      background:rgba(255,255,255,.88);
       border:1px solid var(--line);
       border-radius:18px;
       box-shadow:var(--shadow);
-      backdrop-filter:blur(12px);
+      backdrop-filter:blur(16px);
       overflow:hidden;
       pointer-events:auto;
     }
     .kpopHead{padding:12px 12px 10px;border-bottom:1px solid var(--line)}
     .kpopTitle{font-weight:950;font-size:13px;line-height:1.2}
     .kpopAddr{margin-top:6px;color:var(--muted);font-size:12px;line-height:1.35}
-    .kpopMeta{margin-top:6px;color:rgba(233,236,241,.55);font-size:12px}
+    .kpopMeta{margin-top:6px;color:rgba(15,21,36,.52);font-size:12px}
     .kpopBtns{display:flex;gap:8px;padding:10px 12px}
     .kpopBtns button{flex:1;padding:9px 10px}
 
-    /* draggable editor window */
-    .dragHint{font-size:12px;color:var(--muted)}
-    .dragBar{
-      cursor:grab;
-    }
-    .dragBar:active{cursor:grabbing}
+    /* draggable headers */
+    .dragBar{ cursor:grab; }
+    .dragBar:active{ cursor:grabbing; }
   </style>
 </head>
 
@@ -250,27 +249,26 @@
     </div>
   </div>
 
-  <!-- Visits floating card (방문 기록만) -->
-  <aside id="visitsCard" class="float" style="right:14px; top:14px; width:min(440px,92vw); display:none">
-    <div class="floatHeader">
+  <!-- Visits window -->
+  <aside id="visitsWin" class="float" style="display:none; width:min(440px,92vw);">
+    <div class="floatHeader dragBar" id="visitsDragBar">
       <h3 id="visitsTitle">방문 기록</h3>
-      <button id="openWriteBtn" class="primary" style="display:none">작성</button>
       <button id="closeVisitsBtn">닫기</button>
     </div>
     <div class="floatBody">
-      <div class="hint" id="visitsHint">마커를 누르면 해당 가게 기록을 불러와.</div>
+      <div class="hint" id="visitsHint">마커 위 팝오버에서 “기록”을 누르면 열려.</div>
       <div style="margin-top:12px" id="visits"></div>
     </div>
   </aside>
 
-  <!-- Draggable Visit Editor Window -->
-  <aside id="editorWin" class="float" style="left:14px; top:14px; width:min(520px,92vw); display:none">
+  <!-- Editor window -->
+  <aside id="editorWin" class="float" style="display:none; width:min(520px,92vw);">
     <div class="floatHeader dragBar" id="editorDragBar">
       <h3 id="editorTitle">방문기 작성</h3>
       <button id="closeEditorBtn">닫기</button>
     </div>
     <div class="floatBody">
-      <div class="dragHint">헤더를 드래그해서 창을 옮길 수 있어.</div>
+      <div class="hint">헤더를 드래그해서 창을 옮길 수 있어.</div>
 
       <div style="margin-top:12px" class="grid">
         <div>
@@ -294,7 +292,7 @@
       </div>
 
       <div class="hint" style="margin-top:10px">
-        작성자 표시는 이메일이 아니라 닉네임이야. (닉네임 없으면 작성 불가)
+        작성자 표시는 닉네임. (닉네임 없으면 작성 불가)
       </div>
     </div>
   </aside>
@@ -340,7 +338,7 @@
         <button id="closeLoginBtn">닫기</button>
       </div>
       <div class="modalBody">
-        <div class="card">
+        <div class="cardItem">
           <label>이메일</label>
           <input id="loginEmail" type="email" placeholder="you@example.com" />
           <label>비밀번호</label>
@@ -361,7 +359,7 @@
         <button id="closeSignupBtn">닫기</button>
       </div>
       <div class="modalBody">
-        <div class="card">
+        <div class="cardItem">
           <label>닉네임 (필수, 중복 불가)</label>
           <input id="signupNickname" placeholder="예: jaewon" maxlength="20" />
           <label>이메일</label>
@@ -384,7 +382,7 @@
         <button id="closeAccountBtn">닫기</button>
       </div>
       <div class="modalBody">
-        <div class="card">
+        <div class="cardItem">
           <div class="hint">현재 로그인</div>
           <div id="accountLine" style="font-weight:950;margin-top:6px"></div>
 
@@ -401,11 +399,11 @@
           <div style="margin-top:14px">
             <div class="sectionTitle">내 통계</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-              <div class="card" style="margin:0">
+              <div class="cardItem" style="margin:0">
                 <div class="hint">내가 추가한 가게</div>
                 <div style="font-size:20px;font-weight:950;margin-top:6px" id="myPlacesCount">-</div>
               </div>
-              <div class="card" style="margin:0">
+              <div class="cardItem" style="margin:0">
                 <div class="hint">내가 남긴 방문기</div>
                 <div style="font-size:20px;font-weight:950;margin-top:6px" id="myVisitsCount">-</div>
               </div>
@@ -444,28 +442,30 @@ function close(el){ el.classList.remove('open'); }
 const state = {
   sb: null,
   user: null,
-  myProfile: null,              // {id, nickname}
-  nameByUserId: new Map(),       // user_id -> nickname
+  myProfile: null,
+  nameByUserId: new Map(),
+
   map: null,
   geocoder: null,
+
   places: [],
-  markers: new Map(),            // placeId -> marker
+  markers: new Map(),
   selectedPlace: null,
+
   editingVisitId: null,
 
-  // Kakao CustomOverlay for place popover
   placeOverlay: null,
-  placeOverlayEl: null
+  placeOverlayEl: null,
+
+  markerImage: null
 };
 
 function configured(){
   return SB_URL && SB_KEY && !SB_URL.includes("YOUR_") && !SB_KEY.includes("YOUR_");
 }
-
 function hasNickname(){
   return !!(state.myProfile?.nickname && String(state.myProfile.nickname).trim());
 }
-
 function requireNicknameOrGuide(){
   if(!state.user){
     toast('로그인 필요');
@@ -479,12 +479,269 @@ function requireNicknameOrGuide(){
   }
   return true;
 }
-
 function displayName(user_id, fallbackEmail){
   const nick = state.nameByUserId.get(user_id);
   if(nick && String(nick).trim()) return nick;
   if(fallbackEmail) return fallbackEmail;
   return 'user';
+}
+
+function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+function rectsOverlap(a, b){
+  return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+}
+
+/* ===== window manager (겹침 방지 + 자동 배치 + 드래그) ===== */
+function setWinVisible(el, show){
+  el.style.display = show ? 'block' : 'none';
+}
+function isWinVisible(el){
+  return el.style.display !== 'none';
+}
+
+function ensureInViewport(el){
+  const r = el.getBoundingClientRect();
+  let left = r.left;
+  let top = r.top;
+
+  left = clamp(left, 8, window.innerWidth - r.width - 8);
+  top  = clamp(top, 8, window.innerHeight - r.height - 8);
+
+  el.style.left = left + 'px';
+  el.style.top  = top + 'px';
+}
+
+function layoutWindows(force=false){
+  const visits = $('visitsWin');
+  const editor = $('editorWin');
+
+  const vis = isWinVisible(visits);
+  const edi = isWinVisible(editor);
+
+  // manual drag 했으면(force가 아니면) 위치 유지. 단, 화면 밖이면 보정.
+  if(vis && visits.dataset.manual === '1' && !force){ ensureInViewport(visits); }
+  if(edi && editor.dataset.manual === '1' && !force){ ensureInViewport(editor); }
+
+  // 자동 배치 대상: manual 아니거나 force
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const margin = 14;
+  const dockSafe = 92; // dock+여유
+
+  function placeTopRight(el){
+    const r = el.getBoundingClientRect();
+    el.style.left = (vw - r.width - margin) + 'px';
+    el.style.top  = margin + 'px';
+  }
+  function placeTopLeft(el){
+    el.style.left = margin + 'px';
+    el.style.top  = margin + 'px';
+  }
+  function placeBottomLeft(el){
+    const r = el.getBoundingClientRect();
+    el.style.left = margin + 'px';
+    el.style.top  = (vh - r.height - dockSafe) + 'px';
+  }
+  function placeCenteredTop(el, offsetY=0){
+    const r = el.getBoundingClientRect();
+    el.style.left = Math.max(margin, Math.round((vw - r.width)/2)) + 'px';
+    el.style.top  = (margin + offsetY) + 'px';
+  }
+
+  // if both visible: avoid overlap by strategy
+  if(vis && edi){
+    const vAuto = (visits.dataset.manual !== '1') || force;
+    const eAuto = (editor.dataset.manual !== '1') || force;
+
+    // first set defaults for auto ones
+    if(vAuto) placeTopRight(visits);
+    if(eAuto) placeBottomLeft(editor);
+
+    ensureInViewport(visits);
+    ensureInViewport(editor);
+
+    // if still overlaps (small screens), stack vertically centered
+    const vr = visits.getBoundingClientRect();
+    const er = editor.getBoundingClientRect();
+    if(rectsOverlap(vr, er)){
+      if(vAuto) placeCenteredTop(visits, 0);
+      if(eAuto) placeCenteredTop(editor, Math.round(vr.height + 10));
+      ensureInViewport(visits);
+      ensureInViewport(editor);
+    }
+    return;
+  }
+
+  if(vis){
+    const vAuto = (visits.dataset.manual !== '1') || force;
+    if(vAuto) placeTopRight(visits);
+    ensureInViewport(visits);
+  }
+  if(edi){
+    const eAuto = (editor.dataset.manual !== '1') || force;
+    if(eAuto) placeBottomLeft(editor);
+    ensureInViewport(editor);
+  }
+}
+
+function makeDraggable(winEl, barEl){
+  let dragging = false;
+  let startX=0, startY=0, startLeft=0, startTop=0;
+
+  barEl.addEventListener('pointerdown', (e)=>{
+    // 버튼/입력 클릭은 드래그 시작하지 않음 (닫기 버튼 먹통 방지 핵심)
+    if(e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea')) return;
+    if(e.button !== 0) return;
+
+    dragging = true;
+    winEl.dataset.manual = '1';
+    barEl.setPointerCapture(e.pointerId);
+
+    startX = e.clientX;
+    startY = e.clientY;
+
+    const r = winEl.getBoundingClientRect();
+    startLeft = r.left;
+    startTop  = r.top;
+  });
+
+  barEl.addEventListener('pointermove', (e)=>{
+    if(!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    const r = winEl.getBoundingClientRect();
+    const newLeft = clamp(startLeft + dx, 8, window.innerWidth - r.width - 8);
+    const newTop  = clamp(startTop + dy, 8, window.innerHeight - r.height - 8);
+
+    winEl.style.left = newLeft + 'px';
+    winEl.style.top  = newTop + 'px';
+  });
+
+  const stop = (e)=>{
+    if(!dragging) return;
+    dragging = false;
+    try{ barEl.releasePointerCapture(e.pointerId); } catch {}
+  };
+  barEl.addEventListener('pointerup', stop);
+  barEl.addEventListener('pointercancel', stop);
+}
+
+/* ===== Kakao Map / overlay / dot marker ===== */
+function buildDotMarkerImage(){
+  // SVG dot marker
+  const svg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18">
+    <circle cx="9" cy="9" r="6.2" fill="white" fill-opacity="0.95"/>
+    <circle cx="9" cy="9" r="5.2" fill="#2b60ff" fill-opacity="0.92"/>
+    <circle cx="9" cy="9" r="6.7" fill="none" stroke="rgba(0,0,0,0.18)" stroke-width="1"/>
+  </svg>`;
+  const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
+  const size = new kakao.maps.Size(18, 18);
+  const option = { offset: new kakao.maps.Point(9, 9) };
+  return new kakao.maps.MarkerImage(url, size, option);
+}
+
+function initMap(){
+  if(!(window.kakao && window.kakao.maps)){
+    toast('카카오 지도 SDK 로딩 실패 (키/도메인/카카오맵 ON 확인)');
+    return;
+  }
+  const center = new kakao.maps.LatLng(37.5665, 126.9780);
+  state.map = new kakao.maps.Map($('map'), { center, level: 6 });
+  state.geocoder = new kakao.maps.services.Geocoder();
+
+  state.markerImage = buildDotMarkerImage();
+
+  // place overlay element
+  state.placeOverlayEl = document.createElement('div');
+  state.placeOverlayEl.style.pointerEvents = 'auto';
+
+  // prevent map click from firing when clicking overlay buttons
+  ['pointerdown','mousedown','touchstart','click'].forEach(ev=>{
+    state.placeOverlayEl.addEventListener(ev, (e)=> e.stopPropagation(), { passive:false });
+  });
+
+  state.placeOverlay = new kakao.maps.CustomOverlay({
+    content: state.placeOverlayEl,
+    xAnchor: 0.5,
+    yAnchor: 1.25,
+    zIndex: 1300
+  });
+
+  // click map closes only place overlay (windows remain)
+  kakao.maps.event.addListener(state.map, 'click', () => {
+    hidePlaceOverlay();
+  });
+}
+
+function hidePlaceOverlay(){
+  if(state.placeOverlay) state.placeOverlay.setMap(null);
+}
+
+function renderPlaceOverlay(place){
+  if(!place) return;
+
+  const author = displayName(place.user_id);
+  state.placeOverlayEl.innerHTML = `
+    <div class="kpop">
+      <div class="kpopHead">
+        <div class="kpopTitle">${esc(place.name)}</div>
+        <div class="kpopAddr">${esc(place.address)}</div>
+        <div class="kpopMeta">추가자: ${esc(author)}</div>
+      </div>
+      <div class="kpopBtns">
+        <button id="kpopVisits">기록</button>
+        <button id="kpopWrite" class="primary">작성</button>
+      </div>
+    </div>
+  `;
+
+  state.placeOverlayEl.querySelector('#kpopVisits')?.addEventListener('click', async () => {
+    if(!state.selectedPlace) return;
+    await openVisitsForPlace(state.selectedPlace.id);
+  });
+
+  state.placeOverlayEl.querySelector('#kpopWrite')?.addEventListener('click', () => {
+    if(!requireNicknameOrGuide()) return;
+    if(!state.selectedPlace){ toast('가게부터 선택'); return; }
+    openEditorForPlace();
+  });
+
+  const pos = new kakao.maps.LatLng(place.lat, place.lng);
+  state.placeOverlay.setPosition(pos);
+  state.placeOverlay.setMap(state.map);
+}
+
+/* ===== Supabase ===== */
+async function initSupabase(){
+  if(!configured()){ toast('Supabase URL/KEY를 index.html에 넣어줘'); return; }
+  if(!window.supabase?.createClient){ toast('Supabase SDK 로딩 실패'); return; }
+
+  state.sb = window.supabase.createClient(SB_URL, SB_KEY, {
+    auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+  });
+
+  const { data } = await state.sb.auth.getSession();
+  state.user = data?.session?.user ?? null;
+  if(state.user) await ensureMyProfile();
+
+  updateDockUI();
+
+  state.sb.auth.onAuthStateChange(async (_event, session) => {
+    state.user = session?.user ?? null;
+    state.myProfile = null;
+
+    if(state.user){
+      await ensureMyProfile();
+      await loadMyStats();
+    }else{
+      $('myPlacesCount').textContent = '-';
+      $('myVisitsCount').textContent = '-';
+    }
+    updateDockUI();
+  });
 }
 
 async function fetchNicknames(userIds){
@@ -537,146 +794,12 @@ async function loadMyStats(){
 
 function updateDockUI(){
   const loggedIn = !!state.user;
-
   $('loginOpenBtn').style.display = loggedIn ? 'none' : 'inline-flex';
   $('signupOpenBtn').style.display = loggedIn ? 'none' : 'inline-flex';
   $('accountOpenBtn').style.display = loggedIn ? 'inline-flex' : 'none';
-
   if(loggedIn){
     $('accountOpenBtn').textContent = hasNickname() ? state.myProfile.nickname : '계정';
   }
-}
-
-function showVisitsCard(show){
-  $('visitsCard').style.display = show ? 'block' : 'none';
-}
-
-function showEditor(show){
-  $('editorWin').style.display = show ? 'block' : 'none';
-}
-
-function resetEditor(){
-  state.editingVisitId = null;
-  $('editorTitle').textContent = '방문기 작성';
-  $('saveVisitBtn').textContent = '저장';
-  $('cancelEditBtn').style.display = 'none';
-  $('visitDate').value = todayISO();
-  $('visitRating').value = '';
-  $('visitContent').value = '';
-}
-
-function positionEditorDefault(){
-  const el = $('editorWin');
-  const w = Math.min(520, window.innerWidth - 28);
-  el.style.width = w + 'px';
-  const left = Math.max(14, Math.round((window.innerWidth - w) / 2));
-  const top = Math.max(14, Math.round((window.innerHeight - 520) / 2));
-  el.style.left = left + 'px';
-  el.style.top = top + 'px';
-}
-
-/* ===== Kakao Map / Overlay ===== */
-function initMap(){
-  if(!(window.kakao && window.kakao.maps)){
-    toast('카카오 지도 SDK 로딩 실패 (키/도메인/카카오맵 ON 확인)');
-    return;
-  }
-  const center = new kakao.maps.LatLng(37.5665, 126.9780);
-  state.map = new kakao.maps.Map($('map'), { center, level: 6 });
-  state.geocoder = new kakao.maps.services.Geocoder();
-
-  // place overlay element
-  state.placeOverlayEl = document.createElement('div');
-  state.placeOverlayEl.style.pointerEvents = 'auto';
-
-  // stop map drag when interacting with popover
-  ['pointerdown','mousedown','touchstart'].forEach(ev=>{
-    state.placeOverlayEl.addEventListener(ev, (e)=> e.stopPropagation(), { passive:true });
-  });
-
-  state.placeOverlay = new kakao.maps.CustomOverlay({
-    content: state.placeOverlayEl,
-    xAnchor: 0.5,
-    yAnchor: 1.15,   // marker 위로 살짝 띄움
-    zIndex: 9999
-  });
-
-  // map click: close overlay (but keep visits/editor as is)
-  kakao.maps.event.addListener(state.map, 'click', () => {
-    hidePlaceOverlay();
-  });
-}
-
-function hidePlaceOverlay(){
-  if(state.placeOverlay) state.placeOverlay.setMap(null);
-}
-
-function renderPlaceOverlay(place){
-  if(!place) return;
-
-  const author = displayName(place.user_id);
-  state.placeOverlayEl.innerHTML = `
-    <div class="kpop">
-      <div class="kpopHead">
-        <div class="kpopTitle">${esc(place.name)}</div>
-        <div class="kpopAddr">${esc(place.address)}</div>
-        <div class="kpopMeta">추가자: ${esc(author)}</div>
-      </div>
-      <div class="kpopBtns">
-        <button id="kpopVisits">기록</button>
-        <button id="kpopWrite" class="primary">작성</button>
-      </div>
-    </div>
-  `;
-
-  // 버튼 이벤트 바인딩
-  state.placeOverlayEl.querySelector('#kpopVisits')?.addEventListener('click', async () => {
-    if(!state.selectedPlace) return;
-    showVisitsCard(true);
-    await loadVisitsAndRender(state.selectedPlace.id);
-  });
-
-  state.placeOverlayEl.querySelector('#kpopWrite')?.addEventListener('click', () => {
-    if(!requireNicknameOrGuide()) return;
-    if(!state.selectedPlace){ toast('가게부터 선택'); return; }
-    openWriteForCurrentPlace();
-  });
-
-  const pos = new kakao.maps.LatLng(place.lat, place.lng);
-  state.placeOverlay.setPosition(pos);
-  state.placeOverlay.setMap(state.map);
-}
-
-/* ===== Supabase ===== */
-async function initSupabase(){
-  if(!configured()){ toast('Supabase URL/KEY를 index.html에 넣어줘'); return; }
-  if(!window.supabase?.createClient){ toast('Supabase SDK 로딩 실패'); return; }
-
-  state.sb = window.supabase.createClient(SB_URL, SB_KEY, {
-    auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
-  });
-
-  const { data } = await state.sb.auth.getSession();
-  state.user = data?.session?.user ?? null;
-  if(state.user) await ensureMyProfile();
-
-  updateDockUI();
-
-  state.sb.auth.onAuthStateChange(async (_event, session) => {
-    state.user = session?.user ?? null;
-    state.myProfile = null;
-
-    if(state.user){
-      await ensureMyProfile();
-      await loadMyStats();
-    }else{
-      $('myPlacesCount').textContent = '-';
-      $('myVisitsCount').textContent = '-';
-    }
-    updateDockUI();
-
-    // 로그인 상태 변화 후: 방문기 편집 가능 여부는 openWrite에서 체크
-  });
 }
 
 async function loadPlaces(){
@@ -702,7 +825,8 @@ function renderMarkers(){
 
   for(const p of state.places){
     const marker = new kakao.maps.Marker({
-      position: new kakao.maps.LatLng(p.lat, p.lng)
+      position: new kakao.maps.LatLng(p.lat, p.lng),
+      image: state.markerImage
     });
     marker.setMap(state.map);
 
@@ -714,6 +838,15 @@ function renderMarkers(){
   }
 }
 
+/* ===== marker click behavior: overlay only ===== */
+function closeInfoWindows(){
+  setWinVisible($('visitsWin'), false);
+  setWinVisible($('editorWin'), false);
+  // reset manual flags so next open uses auto layout (원하면 유지해도 됨)
+  $('visitsWin').dataset.manual = '';
+  $('editorWin').dataset.manual = '';
+}
+
 async function openPlace(placeId){
   const place = state.places.find(p => p.id === placeId);
   if(!place) return;
@@ -721,17 +854,28 @@ async function openPlace(placeId){
   state.selectedPlace = place;
   await fetchNicknames([place.user_id]);
 
-  // 지도 이동 + overlay 표시
+  // IMPORTANT: marker click => ONLY show place overlay (no visits/editor auto)
+  closeInfoWindows();
+  renderPlaceOverlay(place);
+
   const pos = new kakao.maps.LatLng(place.lat, place.lng);
   state.map.setCenter(pos);
   state.map.setLevel(Math.min(state.map.getLevel(), 4));
-  renderPlaceOverlay(place);
+}
 
-  // 방문 기록 카드: 기본으로 열어주되, 너무 부담이면 여기만 주석 처리하면 됨
-  showVisitsCard(true);
-  $('visitsTitle').textContent = `방문 기록 · ${place.name}`;
-  $('visitsHint').textContent = '작성/수정/삭제는 로그인+닉네임 필요. 기록은 모두에게 공개.';
-  $('openWriteBtn').style.display = (state.user && hasNickname()) ? 'inline-flex' : 'none';
+/* ===== Visits window ===== */
+async function openVisitsForPlace(placeId){
+  if(!state.selectedPlace || state.selectedPlace.id !== placeId){
+    state.selectedPlace = state.places.find(p => p.id === placeId) || state.selectedPlace;
+  }
+  if(!state.selectedPlace){ toast('가게 선택 필요'); return; }
+
+  $('visitsTitle').textContent = `방문 기록 · ${state.selectedPlace.name}`;
+  $('visitsHint').textContent = '수정/삭제는 본인만. 작성은 마커 팝오버 “작성”.';
+
+  setWinVisible($('visitsWin'), true);
+  // editor가 열려있어도 겹치지 않게 배치
+  layoutWindows(true);
 
   await loadVisitsAndRender(placeId);
 }
@@ -763,7 +907,7 @@ async function loadVisitsAndRender(placeId){
     const isMine = !!(state.user && v.user_id === state.user.id);
 
     const div = document.createElement('div');
-    div.className = 'card';
+    div.className = 'cardItem';
     div.innerHTML = `
       <div class="visitTop">
         <div style="font-weight:950">${esc(v.visited_at)}</div>
@@ -782,18 +926,18 @@ async function loadVisitsAndRender(placeId){
     if(isMine){
       div.querySelector('[data-act="edit"]').addEventListener('click', ()=>{
         if(!requireNicknameOrGuide()) return;
-        if(!state.selectedPlace) return;
-
         state.editingVisitId = v.id;
+
         $('editorTitle').textContent = '방문기 수정';
         $('saveVisitBtn').textContent = '수정 저장';
         $('cancelEditBtn').style.display = 'inline-flex';
+
         $('visitDate').value = v.visited_at || todayISO();
         $('visitRating').value = (v.rating ?? '');
         $('visitContent').value = v.content || '';
 
-        positionEditorDefault();
-        showEditor(true);
+        setWinVisible($('editorWin'), true);
+        layoutWindows(true);
         toast('편집 모드');
       });
 
@@ -807,11 +951,80 @@ async function loadVisitsAndRender(placeId){
         toast('삭제됨');
         await loadVisitsAndRender(placeId);
         await loadMyStats();
-        resetEditor();
       });
     }
 
     wrap.appendChild(div);
+  }
+}
+
+/* ===== Editor window ===== */
+function openEditorForPlace(){
+  if(!requireNicknameOrGuide()) return;
+  if(!state.selectedPlace){ toast('가게부터 선택'); return; }
+
+  state.editingVisitId = null;
+  $('editorTitle').textContent = `방문기 작성 · ${state.selectedPlace.name}`;
+  $('saveVisitBtn').textContent = '저장';
+  $('cancelEditBtn').style.display = 'none';
+
+  $('visitDate').value = todayISO();
+  $('visitRating').value = '';
+  $('visitContent').value = '';
+
+  setWinVisible($('editorWin'), true);
+  layoutWindows(true);
+}
+
+async function saveVisit(){
+  if(!requireNicknameOrGuide()) return;
+  if(!state.selectedPlace){ toast('가게부터 선택'); return; }
+
+  const visited_at = $('visitDate').value || todayISO();
+  const ratingRaw = $('visitRating').value;
+  const rating = (ratingRaw === '') ? null : Math.max(0, Math.min(5, Number(ratingRaw)));
+  const content = ($('visitContent').value || '').trim();
+  if(!content){ toast('방문기 내용을 써줘'); return; }
+
+  $('saveVisitBtn').disabled = true;
+  try{
+    if(state.editingVisitId){
+      const { error } = await state.sb
+        .from('visits')
+        .update({ visited_at, rating, content })
+        .eq('id', state.editingVisitId);
+
+      if(error){ console.error(error); toast('수정 실패'); return; }
+      toast('수정됨');
+      state.editingVisitId = null;
+      $('cancelEditBtn').style.display = 'none';
+      $('saveVisitBtn').textContent = '저장';
+      $('editorTitle').textContent = `방문기 작성 · ${state.selectedPlace.name}`;
+    }else{
+      const payload = {
+        user_id: state.user.id,
+        author_email: state.user.email || null,
+        place_id: state.selectedPlace.id,
+        visited_at,
+        rating,
+        content
+      };
+
+      const { error } = await state.sb.from('visits').insert(payload);
+      if(error){ console.error(error); toast('저장 실패'); return; }
+      toast('저장됨');
+      $('visitContent').value = '';
+      $('visitRating').value = '';
+    }
+
+    await loadMyStats();
+
+    // visits 창이 열려 있으면 즉시 반영
+    if(isWinVisible($('visitsWin'))){
+      await loadVisitsAndRender(state.selectedPlace.id);
+    }
+  } finally {
+    $('saveVisitBtn').disabled = false;
   }
 }
 
@@ -826,7 +1039,6 @@ function haversineMeters(lat1,lng1,lat2,lng2){
   const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return R*c;
 }
-
 function isSeoulByCoord(lat, lng){
   return new Promise((resolve) => {
     state.geocoder.coord2RegionCode(lng, lat, (res, status) => {
@@ -839,7 +1051,6 @@ function isSeoulByCoord(lat, lng){
     });
   });
 }
-
 async function findDuplicateByNameAddress(name, address){
   const { data, error } = await state.sb
     .from('places')
@@ -850,7 +1061,6 @@ async function findDuplicateByNameAddress(name, address){
   if(error){ console.error(error); return null; }
   return (data && data.length) ? data[0] : null;
 }
-
 async function findDuplicateByProximity(lat, lng, thresholdMeters = 30){
   const dLat = 0.0006;
   const dLng = 0.00075;
@@ -870,7 +1080,6 @@ async function findDuplicateByProximity(lat, lng, thresholdMeters = 30){
   if(best && bestDist <= thresholdMeters) return { ...best, dist: bestDist };
   return null;
 }
-
 async function createPlace({ name, address, lat, lng }){
   if(!requireNicknameOrGuide()) return null;
 
@@ -904,122 +1113,32 @@ async function createPlace({ name, address, lat, lng }){
     toast(error.message || '가게 저장 실패');
     return null;
   }
-
   return { ...data, existed:false };
-}
-
-/* ===== Visit editor ===== */
-function openWriteForCurrentPlace(){
-  resetEditor();
-  $('editorTitle').textContent = '방문기 작성';
-  $('saveVisitBtn').textContent = '저장';
-  $('cancelEditBtn').style.display = 'none';
-  $('visitDate').value = todayISO();
-
-  positionEditorDefault();
-  showEditor(true);
-}
-
-async function saveVisit(){
-  if(!requireNicknameOrGuide()) return;
-  if(!state.selectedPlace){ toast('가게부터 선택'); return; }
-
-  const visited_at = $('visitDate').value || todayISO();
-  const ratingRaw = $('visitRating').value;
-  const rating = (ratingRaw === '') ? null : Math.max(0, Math.min(5, Number(ratingRaw)));
-  const content = ($('visitContent').value || '').trim();
-  if(!content){ toast('방문기 내용을 써줘'); return; }
-
-  $('saveVisitBtn').disabled = true;
-  try{
-    if(state.editingVisitId){
-      const { error } = await state.sb
-        .from('visits')
-        .update({ visited_at, rating, content })
-        .eq('id', state.editingVisitId);
-      if(error){ console.error(error); toast('수정 실패'); return; }
-      toast('수정됨');
-      resetEditor();
-    }else{
-      const payload = {
-        user_id: state.user.id,
-        author_email: state.user.email || null,
-        place_id: state.selectedPlace.id,
-        visited_at,
-        rating,
-        content
-      };
-      const { error } = await state.sb.from('visits').insert(payload);
-      if(error){ console.error(error); toast('저장 실패'); return; }
-      toast('저장됨');
-      $('visitContent').value = '';
-      $('visitRating').value = '';
-    }
-
-    await loadVisitsAndRender(state.selectedPlace.id);
-    await loadMyStats();
-  } finally {
-    $('saveVisitBtn').disabled = false;
-  }
-}
-
-/* ===== Draggable editor ===== */
-function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
-
-function enableDrag(){
-  const win = $('editorWin');
-  const bar = $('editorDragBar');
-  let dragging = false;
-  let startX=0, startY=0, startLeft=0, startTop=0;
-
-  bar.addEventListener('pointerdown', (e)=>{
-    if(e.button !== 0) return;
-    dragging = true;
-    bar.setPointerCapture(e.pointerId);
-    startX = e.clientX;
-    startY = e.clientY;
-    startLeft = parseInt(win.style.left || '14', 10);
-    startTop  = parseInt(win.style.top  || '14', 10);
-  });
-
-  bar.addEventListener('pointermove', (e)=>{
-    if(!dragging) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-
-    const rect = win.getBoundingClientRect();
-    const newLeft = clamp(startLeft + dx, 8, window.innerWidth - rect.width - 8);
-    const newTop  = clamp(startTop + dy, 8, window.innerHeight - rect.height - 8);
-
-    win.style.left = newLeft + 'px';
-    win.style.top  = newTop + 'px';
-  });
-
-  const stop = (e)=>{
-    if(!dragging) return;
-    dragging = false;
-    try{ bar.releasePointerCapture(e.pointerId); } catch {}
-  };
-  bar.addEventListener('pointerup', stop);
-  bar.addEventListener('pointercancel', stop);
 }
 
 /* ===== UI events ===== */
 window.addEventListener('DOMContentLoaded', () => {
   $('visitDate').value = todayISO();
-  enableDrag();
 
-  // visits card buttons
-  $('closeVisitsBtn').addEventListener('click', ()=> showVisitsCard(false));
-  $('openWriteBtn').addEventListener('click', ()=>{
-    if(!requireNicknameOrGuide()) return;
-    if(!state.selectedPlace){ toast('가게부터 선택'); return; }
-    openWriteForCurrentPlace();
+  // draggable windows
+  makeDraggable($('visitsWin'), $('visitsDragBar'));
+  makeDraggable($('editorWin'), $('editorDragBar'));
+
+  // close buttons (확실히 작동)
+  $('closeVisitsBtn').addEventListener('click', (e)=>{ e.stopPropagation(); setWinVisible($('visitsWin'), false); });
+  $('closeEditorBtn').addEventListener('click', (e)=>{ e.stopPropagation(); setWinVisible($('editorWin'), false); });
+
+  $('cancelEditBtn').addEventListener('click', ()=>{
+    state.editingVisitId = null;
+    $('cancelEditBtn').style.display = 'none';
+    $('saveVisitBtn').textContent = '저장';
+    if(state.selectedPlace) $('editorTitle').textContent = `방문기 작성 · ${state.selectedPlace.name}`;
+    $('visitDate').value = todayISO();
+    $('visitRating').value = '';
+    $('visitContent').value = '';
+    toast('편집 취소');
   });
 
-  // editor buttons
-  $('closeEditorBtn').addEventListener('click', ()=> showEditor(false));
-  $('cancelEditBtn').addEventListener('click', ()=> { resetEditor(); toast('편집 취소'); });
   $('saveVisitBtn').addEventListener('click', saveVisit);
 
   // add flow
@@ -1032,7 +1151,6 @@ window.addEventListener('DOMContentLoaded', () => {
   // auth modals
   $('loginOpenBtn').addEventListener('click', ()=> open($('loginOverlay')));
   $('closeLoginBtn').addEventListener('click', ()=> close($('loginOverlay')));
-
   $('signupOpenBtn').addEventListener('click', ()=> open($('signupOverlay')));
   $('closeSignupBtn').addEventListener('click', ()=> close($('signupOverlay')));
 
@@ -1059,9 +1177,6 @@ window.addEventListener('DOMContentLoaded', () => {
       await ensureMyProfile();
       await loadMyStats();
       updateDockUI();
-
-      // 작성 버튼 상태 갱신
-      $('openWriteBtn').style.display = (state.user && hasNickname()) ? 'inline-flex' : 'none';
     } finally {
       $('loginBtn').disabled = false;
     }
@@ -1106,7 +1221,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
       await loadPlaces();
       if(state.selectedPlace) renderPlaceOverlay(state.selectedPlace);
-      $('openWriteBtn').style.display = (state.user && hasNickname()) ? 'inline-flex' : 'none';
     } finally {
       $('saveNickBtn').disabled = false;
     }
@@ -1117,7 +1231,6 @@ window.addEventListener('DOMContentLoaded', () => {
     toast('로그아웃');
     close($('accountOverlay'));
     updateDockUI();
-    $('openWriteBtn').style.display = 'none';
   });
 
   // address search
@@ -1190,16 +1303,7 @@ window.addEventListener('DOMContentLoaded', () => {
     await openPlace(hit.id);
   });
 
-  // window resize: keep editor visible
-  window.addEventListener('resize', ()=>{
-    const win = $('editorWin');
-    if(win.style.display === 'none') return;
-    const rect = win.getBoundingClientRect();
-    const left = clamp(rect.left, 8, window.innerWidth - rect.width - 8);
-    const top  = clamp(rect.top, 8, window.innerHeight - rect.height - 8);
-    win.style.left = left + 'px';
-    win.style.top  = top + 'px';
-  });
+  window.addEventListener('resize', ()=> layoutWindows(false));
 });
 
 /* ===== boot ===== */
