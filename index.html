@@ -10,20 +10,26 @@
 
   <style>
     :root{
-      --bg:#f4f6fb;
-      --card:rgba(255,255,255,.78);
-      --card2:rgba(255,255,255,.86);
-      --line:rgba(10,14,22,.10);
-      --line2:rgba(10,14,22,.14);
-      --text:#0f1524;
-      --muted:rgba(15,21,36,.62);
-      --accent:#2b60ff;
-      --shadow:0 18px 52px rgba(0,0,0,.16);
+      --text:#eef1f8;
+      --muted:rgba(238,241,248,.65);
+
+      /* 톤다운 글래스 */
+      --glass:rgba(18,20,28,.74);
+      --glass2:rgba(18,20,28,.84);
+      --line:rgba(255,255,255,.12);
+
+      --shadow:0 18px 52px rgba(0,0,0,.38);
       --r:18px;
       --pill:999px;
+
+      --accent:#6aa6ff;
+      --hot:#ff4d6d;
+      --ok:#6aa6ff;
+      --warn:#ffd166;
     }
+
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif;background:var(--bg);color:var(--text)}
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif;color:var(--text)}
     #map{position:fixed;inset:0}
 
     /* bottom dock (짧고 중앙) */
@@ -34,16 +40,12 @@
       width:min(640px, calc(100vw - 24px));
       display:flex; gap:10px; align-items:center;
       padding:10px 12px;
-      background:var(--card);
+      background:var(--glass);
       border:1px solid var(--line);
       border-radius:22px;
       box-shadow:var(--shadow);
-      backdrop-filter:blur(14px);
+      backdrop-filter:blur(16px);
       z-index:1000;
-    }
-    .brand{
-      font-weight:950; letter-spacing:.2px; white-space:nowrap;
-      padding:0 6px; opacity:.92;
     }
     .search{
       flex:1;
@@ -51,17 +53,17 @@
       padding:10px 12px;
       border-radius:var(--pill);
       border:1px solid var(--line);
-      background:rgba(255,255,255,.55);
+      background:rgba(0,0,0,.10);
       min-width:120px;
     }
     .search input{
       width:100%; border:0; outline:0; background:transparent;
       color:var(--text); font-size:14px;
     }
-    .search input::placeholder{color:rgba(15,21,36,.38)}
+    .search input::placeholder{color:rgba(238,241,248,.42)}
     button{
       border:1px solid var(--line);
-      background:rgba(255,255,255,.60);
+      background:rgba(0,0,0,.12);
       color:var(--text);
       padding:10px 12px;
       border-radius:var(--pill);
@@ -69,13 +71,12 @@
       white-space:nowrap;
     }
     button.primary{
-      background:rgba(43,96,255,.12);
-      border-color:rgba(43,96,255,.30);
+      background:rgba(106,166,255,.14);
+      border-color:rgba(106,166,255,.40);
     }
     button:disabled{opacity:.55; cursor:not-allowed}
     .dock .right{display:flex; gap:8px; align-items:center}
     @media (max-width:520px){
-      .brand{display:none}
       .dock{gap:8px}
       button{padding:10px 10px}
     }
@@ -83,11 +84,11 @@
     /* draggable floating windows */
     .float{
       position:fixed;
-      background:var(--card2);
+      background:var(--glass2);
       border:1px solid var(--line);
       border-radius:22px;
       box-shadow:var(--shadow);
-      backdrop-filter:blur(16px);
+      backdrop-filter:blur(18px);
       z-index:1600;
       overflow:hidden;
       pointer-events:auto;
@@ -102,19 +103,12 @@
       margin:0; font-size:14px; line-height:1.25;
       font-weight:950; flex:1; min-width:0;
     }
-    .floatBody{padding:14px; max-height:62vh; overflow:auto}
+    .floatBody{padding:14px; max-height:70vh; overflow:auto}
     .hint{font-size:12px; color:var(--muted); line-height:1.45}
     .sub{margin-top:6px; color:var(--muted); font-size:12px; line-height:1.35; word-break:break-word}
-    .sectionTitle{
-      margin:0 0 10px;
-      font-size:12px;
-      color:rgba(15,21,36,.55);
-      text-transform:uppercase;
-      letter-spacing:.25px;
-    }
 
     .cardItem{
-      background:rgba(255,255,255,.62);
+      background:rgba(0,0,0,.12);
       border:1px solid var(--line);
       border-radius:16px;
       padding:12px;
@@ -125,32 +119,32 @@
       font-size:12px; padding:6px 10px;
       border-radius:var(--pill);
       border:1px solid var(--line);
-      background:rgba(255,255,255,.62);
+      background:rgba(0,0,0,.10);
       white-space:nowrap;
     }
     .visitContent{margin-top:10px; white-space:pre-wrap; font-size:13px; line-height:1.55}
     .miniActions{display:flex; gap:8px; margin-top:10px; justify-content:flex-end}
     .miniActions button{padding:8px 10px}
 
-    label{display:block; font-size:12px; color:rgba(15,21,36,.68); margin:0 0 6px}
+    label{display:block; font-size:12px; color:rgba(238,241,248,.70); margin:0 0 6px}
     input, textarea{
       width:100%;
       border:1px solid var(--line);
-      background:rgba(255,255,255,.72);
+      background:rgba(0,0,0,.14);
       color:var(--text);
       border-radius:14px;
       padding:10px;
       outline:none;
       font-size:13px;
     }
-    textarea{min-height:140px; resize:vertical; line-height:1.55}
-    .grid{display:grid; grid-template-columns:1fr 120px; gap:10px}
+    textarea{min-height:170px; resize:vertical; line-height:1.55}
+    .grid{display:grid; grid-template-columns:1fr 140px; gap:10px}
     .row{display:flex; gap:8px; justify-content:flex-end; margin-top:10px}
 
     /* overlays */
     .overlay{
       position:fixed; inset:0;
-      background:rgba(10,14,22,.25);
+      background:rgba(0,0,0,.35);
       display:none; align-items:center; justify-content:center;
       padding:16px;
       z-index:2000;
@@ -158,7 +152,7 @@
     .overlay.open{display:flex}
     .modal{
       width:min(720px,96vw);
-      background:var(--card2);
+      background:var(--glass2);
       border:1px solid var(--line);
       border-radius:22px;
       box-shadow:var(--shadow);
@@ -177,10 +171,10 @@
       padding:12px;
       border:1px solid var(--line);
       border-radius:16px;
-      background:rgba(255,255,255,.70);
+      background:rgba(0,0,0,.12);
       cursor:pointer;
     }
-    .resultItem:hover{border-color:rgba(43,96,255,.28)}
+    .resultItem:hover{border-color:rgba(106,166,255,.45)}
     .resultItem .t{font-weight:950; font-size:13px; margin-bottom:4px}
     .resultItem .s{font-size:12px; color:var(--muted); line-height:1.35}
 
@@ -189,33 +183,33 @@
       position:fixed;
       left:50%; transform:translateX(-50%);
       bottom:82px;
-      background:rgba(255,255,255,.80);
+      background:rgba(18,20,28,.86);
       border:1px solid var(--line);
       border-radius:var(--pill);
       padding:10px 14px;
       box-shadow:var(--shadow);
       display:none; gap:10px; align-items:center;
       z-index:3000;
-      backdrop-filter:blur(14px);
+      backdrop-filter:blur(16px);
     }
     .toast.show{display:flex}
     .dot{width:8px; height:8px; border-radius:50%; background:var(--accent)}
 
-    /* Kakao marker popover content */
+    /* Kakao place popover */
     .kpop{
-      width:260px;
-      background:rgba(255,255,255,.88);
+      width:270px;
+      background:rgba(18,20,28,.90);
       border:1px solid var(--line);
       border-radius:18px;
       box-shadow:var(--shadow);
-      backdrop-filter:blur(16px);
+      backdrop-filter:blur(18px);
       overflow:hidden;
       pointer-events:auto;
     }
     .kpopHead{padding:12px 12px 10px;border-bottom:1px solid var(--line)}
     .kpopTitle{font-weight:950;font-size:13px;line-height:1.2}
     .kpopAddr{margin-top:6px;color:var(--muted);font-size:12px;line-height:1.35}
-    .kpopMeta{margin-top:6px;color:rgba(15,21,36,.52);font-size:12px}
+    .kpopMeta{margin-top:6px;color:rgba(238,241,248,.52);font-size:12px}
     .kpopBtns{display:flex;gap:8px;padding:10px 12px}
     .kpopBtns button{flex:1;padding:9px 10px}
 
@@ -230,8 +224,6 @@
 
   <!-- bottom dock -->
   <div class="dock">
-    <div class="brand">🍜 Eats</div>
-
     <div class="search" title="가게/주소 검색 (Enter)">
       <span style="opacity:.75">🔎</span>
       <input id="q" placeholder="검색 (Enter)" />
@@ -250,19 +242,19 @@
   </div>
 
   <!-- Visits window -->
-  <aside id="visitsWin" class="float" style="display:none; width:min(440px,92vw);">
+  <aside id="visitsWin" class="float" style="display:none; width:min(560px,94vw); left:auto; right:14px; top:14px;">
     <div class="floatHeader dragBar" id="visitsDragBar">
       <h3 id="visitsTitle">방문 기록</h3>
       <button id="closeVisitsBtn">닫기</button>
     </div>
     <div class="floatBody">
-      <div class="hint" id="visitsHint">마커 위 팝오버에서 “기록”을 누르면 열려.</div>
+      <div class="hint" id="visitsHint">마커 팝오버에서 “기록”을 누르면 열려.</div>
       <div style="margin-top:12px" id="visits"></div>
     </div>
   </aside>
 
   <!-- Editor window -->
-  <aside id="editorWin" class="float" style="display:none; width:min(520px,92vw);">
+  <aside id="editorWin" class="float" style="display:none; width:min(700px,94vw); left:14px; top:14px;">
     <div class="floatHeader dragBar" id="editorDragBar">
       <h3 id="editorTitle">방문기 작성</h3>
       <button id="closeEditorBtn">닫기</button>
@@ -332,7 +324,7 @@
 
   <!-- Login modal -->
   <div id="loginOverlay" class="overlay">
-    <div class="modal" style="width:min(520px,96vw)">
+    <div class="modal" style="width:min(560px,96vw)">
       <div class="modalHeader">
         <h3>로그인</h3>
         <button id="closeLoginBtn">닫기</button>
@@ -346,6 +338,7 @@
           <div class="row">
             <button id="loginBtn" class="primary">로그인</button>
           </div>
+          <div class="hint" style="margin-top:10px">로그인이 안 되면 콘솔(F12) 에러를 같이 봐야 빨라.</div>
         </div>
       </div>
     </div>
@@ -353,7 +346,7 @@
 
   <!-- Signup modal -->
   <div id="signupOverlay" class="overlay">
-    <div class="modal" style="width:min(560px,96vw)">
+    <div class="modal" style="width:min(600px,96vw)">
       <div class="modalHeader">
         <h3>회원가입</h3>
         <button id="closeSignupBtn">닫기</button>
@@ -369,6 +362,7 @@
           <div class="row">
             <button id="signupBtn" class="primary">회원가입</button>
           </div>
+          <div class="hint" style="margin-top:10px">이메일 인증이 켜져 있으면 회원가입 후 메일 확인이 필요할 수 있어.</div>
         </div>
       </div>
     </div>
@@ -376,7 +370,7 @@
 
   <!-- Account modal -->
   <div id="accountOverlay" class="overlay">
-    <div class="modal" style="width:min(640px,96vw)">
+    <div class="modal" style="width:min(700px,96vw)">
       <div class="modalHeader">
         <h3>계정</h3>
         <button id="closeAccountBtn">닫기</button>
@@ -390,14 +384,14 @@
             <label>닉네임</label>
             <input id="nickname" maxlength="20" />
             <div class="row">
-              <button id="saveNickBtn" class="primary">닉네임 변경</button>
+              <button id="saveNickBtn" class="primary">닉네임 저장</button>
               <button id="logoutBtn">로그아웃</button>
             </div>
-            <div class="hint" style="margin-top:8px">닉네임은 공개되고, 중복이면 저장 실패.</div>
+            <div class="hint" style="margin-top:8px">닉네임 저장 후 바로 추가/작성 가능해야 정상.</div>
           </div>
 
           <div style="margin-top:14px">
-            <div class="sectionTitle">내 통계</div>
+            <div class="hint" style="margin-bottom:8px">내 통계</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
               <div class="cardItem" style="margin:0">
                 <div class="hint">내가 추가한 가게</div>
@@ -439,8 +433,12 @@ function toast(msg){
 function open(el){ el.classList.add('open'); }
 function close(el){ el.classList.remove('open'); }
 
+function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
 const state = {
   sb: null,
+  sbReady: false,
+
   user: null,
   myProfile: null,
   nameByUserId: new Map(),
@@ -449,7 +447,8 @@ const state = {
   geocoder: null,
 
   places: [],
-  markers: new Map(),
+  markers: new Map(),          // placeId -> Marker
+  visitCounts: new Map(),      // placeId -> count
   selectedPlace: null,
 
   editingVisitId: null,
@@ -457,28 +456,50 @@ const state = {
   placeOverlay: null,
   placeOverlayEl: null,
 
-  markerImage: null
+  markerImageCache: new Map(), // key -> MarkerImage
+
+  zTop: 1600
 };
 
 function configured(){
   return SB_URL && SB_KEY && !SB_URL.includes("YOUR_") && !SB_KEY.includes("YOUR_");
 }
-function hasNickname(){
-  return !!(state.myProfile?.nickname && String(state.myProfile.nickname).trim());
+
+function getMyNickname(){
+  const a = (state.myProfile?.nickname || '').trim();
+  if(a) return a;
+  const b = (state.user?.user_metadata?.nickname || '').trim();
+  if(b) return b;
+  return '';
 }
+function hasNickname(){
+  return !!getMyNickname();
+}
+
+function requireSb(){
+  if(!state.sbReady || !state.sb){
+    toast('초기화 중… 새로고침 후 다시');
+    return false;
+  }
+  return true;
+}
+
 function requireNicknameOrGuide(){
+  if(!requireSb()) return false;
+
   if(!state.user){
     toast('로그인 필요');
     open($('loginOverlay'));
     return false;
   }
   if(!hasNickname()){
-    toast('닉네임이 필요해. 계정에서 설정해줘.');
+    toast('닉네임이 필요해. 계정에서 저장해줘.');
     open($('accountOverlay'));
     return false;
   }
   return true;
 }
+
 function displayName(user_id, fallbackEmail){
   const nick = state.nameByUserId.get(user_id);
   if(nick && String(nick).trim()) return nick;
@@ -486,116 +507,23 @@ function displayName(user_id, fallbackEmail){
   return 'user';
 }
 
-function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
-
-function rectsOverlap(a, b){
-  return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+function bringToFront(el){
+  state.zTop += 1;
+  el.style.zIndex = String(state.zTop);
 }
 
-/* ===== window manager (겹침 방지 + 자동 배치 + 드래그) ===== */
-function setWinVisible(el, show){
-  el.style.display = show ? 'block' : 'none';
-}
-function isWinVisible(el){
-  return el.style.display !== 'none';
-}
-
-function ensureInViewport(el){
-  const r = el.getBoundingClientRect();
-  let left = r.left;
-  let top = r.top;
-
-  left = clamp(left, 8, window.innerWidth - r.width - 8);
-  top  = clamp(top, 8, window.innerHeight - r.height - 8);
-
-  el.style.left = left + 'px';
-  el.style.top  = top + 'px';
-}
-
-function layoutWindows(force=false){
-  const visits = $('visitsWin');
-  const editor = $('editorWin');
-
-  const vis = isWinVisible(visits);
-  const edi = isWinVisible(editor);
-
-  // manual drag 했으면(force가 아니면) 위치 유지. 단, 화면 밖이면 보정.
-  if(vis && visits.dataset.manual === '1' && !force){ ensureInViewport(visits); }
-  if(edi && editor.dataset.manual === '1' && !force){ ensureInViewport(editor); }
-
-  // 자동 배치 대상: manual 아니거나 force
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const margin = 14;
-  const dockSafe = 92; // dock+여유
-
-  function placeTopRight(el){
-    const r = el.getBoundingClientRect();
-    el.style.left = (vw - r.width - margin) + 'px';
-    el.style.top  = margin + 'px';
-  }
-  function placeTopLeft(el){
-    el.style.left = margin + 'px';
-    el.style.top  = margin + 'px';
-  }
-  function placeBottomLeft(el){
-    const r = el.getBoundingClientRect();
-    el.style.left = margin + 'px';
-    el.style.top  = (vh - r.height - dockSafe) + 'px';
-  }
-  function placeCenteredTop(el, offsetY=0){
-    const r = el.getBoundingClientRect();
-    el.style.left = Math.max(margin, Math.round((vw - r.width)/2)) + 'px';
-    el.style.top  = (margin + offsetY) + 'px';
-  }
-
-  // if both visible: avoid overlap by strategy
-  if(vis && edi){
-    const vAuto = (visits.dataset.manual !== '1') || force;
-    const eAuto = (editor.dataset.manual !== '1') || force;
-
-    // first set defaults for auto ones
-    if(vAuto) placeTopRight(visits);
-    if(eAuto) placeBottomLeft(editor);
-
-    ensureInViewport(visits);
-    ensureInViewport(editor);
-
-    // if still overlaps (small screens), stack vertically centered
-    const vr = visits.getBoundingClientRect();
-    const er = editor.getBoundingClientRect();
-    if(rectsOverlap(vr, er)){
-      if(vAuto) placeCenteredTop(visits, 0);
-      if(eAuto) placeCenteredTop(editor, Math.round(vr.height + 10));
-      ensureInViewport(visits);
-      ensureInViewport(editor);
-    }
-    return;
-  }
-
-  if(vis){
-    const vAuto = (visits.dataset.manual !== '1') || force;
-    if(vAuto) placeTopRight(visits);
-    ensureInViewport(visits);
-  }
-  if(edi){
-    const eAuto = (editor.dataset.manual !== '1') || force;
-    if(eAuto) placeBottomLeft(editor);
-    ensureInViewport(editor);
-  }
-}
-
+/* ===== draggable windows (자동 정렬 삭제, 수동만) ===== */
 function makeDraggable(winEl, barEl){
   let dragging = false;
   let startX=0, startY=0, startLeft=0, startTop=0;
 
-  barEl.addEventListener('pointerdown', (e)=>{
-    // 버튼/입력 클릭은 드래그 시작하지 않음 (닫기 버튼 먹통 방지 핵심)
+  const onDown = (e)=>{
+    // 버튼/입력에서 드래그 시작하지 않음 (닫기/클릭 정상화)
     if(e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea')) return;
     if(e.button !== 0) return;
 
     dragging = true;
-    winEl.dataset.manual = '1';
+    bringToFront(winEl);
     barEl.setPointerCapture(e.pointerId);
 
     startX = e.clientX;
@@ -604,9 +532,9 @@ function makeDraggable(winEl, barEl){
     const r = winEl.getBoundingClientRect();
     startLeft = r.left;
     startTop  = r.top;
-  });
+  };
 
-  barEl.addEventListener('pointermove', (e)=>{
+  const onMove = (e)=>{
     if(!dragging) return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
@@ -617,32 +545,22 @@ function makeDraggable(winEl, barEl){
 
     winEl.style.left = newLeft + 'px';
     winEl.style.top  = newTop + 'px';
-  });
+    winEl.style.right = 'auto'; // right 고정 해제
+  };
 
-  const stop = (e)=>{
+  const onUp = (e)=>{
     if(!dragging) return;
     dragging = false;
     try{ barEl.releasePointerCapture(e.pointerId); } catch {}
   };
-  barEl.addEventListener('pointerup', stop);
-  barEl.addEventListener('pointercancel', stop);
+
+  barEl.addEventListener('pointerdown', onDown);
+  barEl.addEventListener('pointermove', onMove);
+  barEl.addEventListener('pointerup', onUp);
+  barEl.addEventListener('pointercancel', onUp);
 }
 
-/* ===== Kakao Map / overlay / dot marker ===== */
-function buildDotMarkerImage(){
-  // SVG dot marker
-  const svg = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18">
-    <circle cx="9" cy="9" r="6.2" fill="white" fill-opacity="0.95"/>
-    <circle cx="9" cy="9" r="5.2" fill="#2b60ff" fill-opacity="0.92"/>
-    <circle cx="9" cy="9" r="6.7" fill="none" stroke="rgba(0,0,0,0.18)" stroke-width="1"/>
-  </svg>`;
-  const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
-  const size = new kakao.maps.Size(18, 18);
-  const option = { offset: new kakao.maps.Point(9, 9) };
-  return new kakao.maps.MarkerImage(url, size, option);
-}
-
+/* ===== Kakao Map / overlay ===== */
 function initMap(){
   if(!(window.kakao && window.kakao.maps)){
     toast('카카오 지도 SDK 로딩 실패 (키/도메인/카카오맵 ON 확인)');
@@ -652,13 +570,11 @@ function initMap(){
   state.map = new kakao.maps.Map($('map'), { center, level: 6 });
   state.geocoder = new kakao.maps.services.Geocoder();
 
-  state.markerImage = buildDotMarkerImage();
-
   // place overlay element
   state.placeOverlayEl = document.createElement('div');
   state.placeOverlayEl.style.pointerEvents = 'auto';
 
-  // prevent map click from firing when clicking overlay buttons
+  // prevent map click from firing when clicking overlay
   ['pointerdown','mousedown','touchstart','click'].forEach(ev=>{
     state.placeOverlayEl.addEventListener(ev, (e)=> e.stopPropagation(), { passive:false });
   });
@@ -666,11 +582,10 @@ function initMap(){
   state.placeOverlay = new kakao.maps.CustomOverlay({
     content: state.placeOverlayEl,
     xAnchor: 0.5,
-    yAnchor: 1.25,
-    zIndex: 1300
+    yAnchor: 1.35,
+    zIndex: 1500
   });
 
-  // click map closes only place overlay (windows remain)
   kakao.maps.event.addListener(state.map, 'click', () => {
     hidePlaceOverlay();
   });
@@ -682,8 +597,8 @@ function hidePlaceOverlay(){
 
 function renderPlaceOverlay(place){
   if(!place) return;
-
   const author = displayName(place.user_id);
+
   state.placeOverlayEl.innerHTML = `
     <div class="kpop">
       <div class="kpopHead">
@@ -714,6 +629,109 @@ function renderPlaceOverlay(place){
   state.placeOverlay.setMap(state.map);
 }
 
+/* ===== marker images (별/하트 상태별) ===== */
+function svgMarker({ shape, variant, size }){
+  // shape: "star" | "heart"
+  // variant: "outline" | "fill" | "hot" | "selectedOutline" | "selectedFill"
+  const S = size;
+  const cx = S/2, cy = S/2;
+
+  // colors
+  let fill = 'none';
+  let stroke = 'rgba(255,255,255,.88)';
+  let glyph = '#6aa6ff';
+
+  const bg = 'rgba(18,20,28,.78)';
+  const ring = 'rgba(255,255,255,.75)';
+
+  if(variant === 'outline'){
+    fill = 'none';
+    glyph = '#6aa6ff';
+  } else if(variant === 'fill'){
+    fill = '#6aa6ff';
+    glyph = '#6aa6ff';
+  } else if(variant === 'hot'){
+    fill = '#ff4d6d';
+    glyph = '#ff4d6d';
+  } else if(variant === 'selectedOutline'){
+    fill = 'none';
+    glyph = '#ff4d6d';
+  } else if(variant === 'selectedFill'){
+    fill = '#ff4d6d';
+    glyph = '#ff4d6d';
+  }
+
+  // star path (5-point)
+  const starPath = `
+    M ${cx} ${S*0.20}
+    L ${S*0.61} ${S*0.38}
+    L ${S*0.78} ${S*0.65}
+    L ${S*0.50} ${S*0.78}
+    L ${S*0.22} ${S*0.65}
+    L ${S*0.39} ${S*0.38}
+    Z
+  `.trim();
+
+  // heart path
+  const heartPath = `
+    M ${S*0.50} ${S*0.75}
+    C ${S*0.20} ${S*0.58}, ${S*0.18} ${S*0.36}, ${S*0.32} ${S*0.28}
+    C ${S*0.42} ${S*0.22}, ${S*0.48} ${S*0.28}, ${S*0.50} ${S*0.32}
+    C ${S*0.52} ${S*0.28}, ${S*0.58} ${S*0.22}, ${S*0.68} ${S*0.28}
+    C ${S*0.82} ${S*0.36}, ${S*0.80} ${S*0.58}, ${S*0.50} ${S*0.75}
+    Z
+  `.trim();
+
+  const path = (shape === 'heart') ? heartPath : starPath;
+
+  const svg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
+    <defs>
+      <filter id="ds" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,.55)"/>
+      </filter>
+    </defs>
+    <g filter="url(#ds)">
+      <circle cx="${cx}" cy="${cy}" r="${S*0.40}" fill="${bg}" stroke="${ring}" stroke-width="${Math.max(1.3, S*0.06)}"/>
+      <path d="${path}" fill="${fill}" stroke="${glyph}" stroke-width="${Math.max(1.6, S*0.07)}" stroke-linejoin="round" />
+    </g>
+  </svg>`;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
+}
+
+function markerImageForPlace(placeId){
+  const count = state.visitCounts.get(placeId) || 0;
+  const selected = state.selectedPlace?.id === placeId;
+
+  let shape = 'star';
+  let variant = 'outline';
+  let size = 26;
+
+  if(selected){
+    shape = 'heart';
+    size = 30;
+    variant = (count > 0) ? 'selectedFill' : 'selectedOutline';
+  } else {
+    shape = 'star';
+    size = 26;
+    if(count === 0) variant = 'outline';
+    else if(count < 3) variant = 'fill';
+    else variant = 'hot';
+  }
+
+  const key = `${shape}:${variant}:${size}`;
+  if(state.markerImageCache.has(key)) return state.markerImageCache.get(key);
+
+  const url = svgMarker({ shape, variant, size });
+  const img = new kakao.maps.MarkerImage(
+    url,
+    new kakao.maps.Size(size, size),
+    { offset: new kakao.maps.Point(size/2, size/2) }
+  );
+  state.markerImageCache.set(key, img);
+  return img;
+}
+
 /* ===== Supabase ===== */
 async function initSupabase(){
   if(!configured()){ toast('Supabase URL/KEY를 index.html에 넣어줘'); return; }
@@ -722,11 +740,14 @@ async function initSupabase(){
   state.sb = window.supabase.createClient(SB_URL, SB_KEY, {
     auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
   });
+  state.sbReady = true;
 
   const { data } = await state.sb.auth.getSession();
   state.user = data?.session?.user ?? null;
-  if(state.user) await ensureMyProfile();
 
+  if(state.user){
+    await afterLoginOrRefresh();
+  }
   updateDockUI();
 
   state.sb.auth.onAuthStateChange(async (_event, session) => {
@@ -734,14 +755,19 @@ async function initSupabase(){
     state.myProfile = null;
 
     if(state.user){
-      await ensureMyProfile();
-      await loadMyStats();
+      await afterLoginOrRefresh();
     }else{
       $('myPlacesCount').textContent = '-';
       $('myVisitsCount').textContent = '-';
+      updateDockUI();
     }
-    updateDockUI();
   });
+}
+
+async function afterLoginOrRefresh(){
+  await ensureMyProfile();     // 프로필 없으면 만들기/업서트
+  await loadMyStats();
+  updateDockUI();
 }
 
 async function fetchNicknames(userIds){
@@ -760,6 +786,31 @@ async function fetchNicknames(userIds){
   }
 }
 
+async function upsertMyProfile(nickname){
+  const u = state.user;
+  if(!u) return;
+
+  const nick = (nickname ?? u.user_metadata?.nickname ?? '').trim();
+  const payload = { id: u.id, nickname: nick || null };
+
+  const { data, error } = await state.sb
+    .from('profiles')
+    .upsert(payload, { onConflict: 'id' })
+    .select('id, nickname')
+    .single();
+
+  if(error){
+    console.error(error);
+    // 프로필 RLS가 꼬여도 최소한 메타데이터로는 진행 가능하게
+    state.myProfile = { id: u.id, nickname: nick };
+    state.nameByUserId.set(u.id, nick);
+    return;
+  }
+
+  state.myProfile = data;
+  state.nameByUserId.set(u.id, data.nickname || '');
+}
+
 async function ensureMyProfile(){
   const u = state.user;
   if(!u) return;
@@ -770,9 +821,20 @@ async function ensureMyProfile(){
     .eq('id', u.id)
     .maybeSingle();
 
-  if(error) console.error(error);
-  state.myProfile = data ?? { id: u.id, nickname: '' };
-  state.nameByUserId.set(u.id, state.myProfile.nickname || '');
+  if(error){
+    console.error(error);
+    await upsertMyProfile(u.user_metadata?.nickname || '');
+    return;
+  }
+
+  if(!data){
+    // 프로필 행이 없으면 생성
+    await upsertMyProfile(u.user_metadata?.nickname || '');
+    return;
+  }
+
+  state.myProfile = data;
+  state.nameByUserId.set(u.id, data.nickname || '');
 }
 
 async function loadMyStats(){
@@ -794,11 +856,13 @@ async function loadMyStats(){
 
 function updateDockUI(){
   const loggedIn = !!state.user;
+
   $('loginOpenBtn').style.display = loggedIn ? 'none' : 'inline-flex';
   $('signupOpenBtn').style.display = loggedIn ? 'none' : 'inline-flex';
   $('accountOpenBtn').style.display = loggedIn ? 'inline-flex' : 'none';
+
   if(loggedIn){
-    $('accountOpenBtn').textContent = hasNickname() ? state.myProfile.nickname : '계정';
+    $('accountOpenBtn').textContent = getMyNickname() ? getMyNickname() : '계정';
   }
 }
 
@@ -811,7 +875,26 @@ async function loadPlaces(){
   if(error){ console.error(error); toast('places 로딩 실패'); return; }
   state.places = data ?? [];
   await fetchNicknames(state.places.map(p => p.user_id));
-  renderMarkers();
+}
+
+async function loadVisitCounts(){
+  // 단순/안전 방식: visits에서 place_id만 가져와서 JS로 카운트
+  const { data, error } = await state.sb
+    .from('visits')
+    .select('place_id');
+
+  if(error){
+    console.error(error);
+    state.visitCounts = new Map();
+    return;
+  }
+
+  const m = new Map();
+  for(const row of (data ?? [])){
+    const id = row.place_id;
+    m.set(id, (m.get(id) || 0) + 1);
+  }
+  state.visitCounts = m;
 }
 
 function clearMarkers(){
@@ -826,7 +909,7 @@ function renderMarkers(){
   for(const p of state.places){
     const marker = new kakao.maps.Marker({
       position: new kakao.maps.LatLng(p.lat, p.lng),
-      image: state.markerImage
+      image: markerImageForPlace(p.id)
     });
     marker.setMap(state.map);
 
@@ -838,15 +921,13 @@ function renderMarkers(){
   }
 }
 
-/* ===== marker click behavior: overlay only ===== */
-function closeInfoWindows(){
-  setWinVisible($('visitsWin'), false);
-  setWinVisible($('editorWin'), false);
-  // reset manual flags so next open uses auto layout (원하면 유지해도 됨)
-  $('visitsWin').dataset.manual = '';
-  $('editorWin').dataset.manual = '';
+function refreshMarkerImages(){
+  for(const [pid, marker] of state.markers.entries()){
+    marker.setImage(markerImageForPlace(pid));
+  }
 }
 
+/* ===== marker click behavior: overlay only ===== */
 async function openPlace(placeId){
   const place = state.places.find(p => p.id === placeId);
   if(!place) return;
@@ -854,13 +935,14 @@ async function openPlace(placeId){
   state.selectedPlace = place;
   await fetchNicknames([place.user_id]);
 
-  // IMPORTANT: marker click => ONLY show place overlay (no visits/editor auto)
-  closeInfoWindows();
   renderPlaceOverlay(place);
 
   const pos = new kakao.maps.LatLng(place.lat, place.lng);
   state.map.setCenter(pos);
   state.map.setLevel(Math.min(state.map.getLevel(), 4));
+
+  // selected 상태 반영
+  refreshMarkerImages();
 }
 
 /* ===== Visits window ===== */
@@ -870,12 +952,16 @@ async function openVisitsForPlace(placeId){
   }
   if(!state.selectedPlace){ toast('가게 선택 필요'); return; }
 
+  const win = $('visitsWin');
+  bringToFront(win);
+  win.style.display = 'block';
+  if(!win.style.left && !win.style.right){
+    win.style.right = '14px';
+    win.style.top = '14px';
+  }
+
   $('visitsTitle').textContent = `방문 기록 · ${state.selectedPlace.name}`;
   $('visitsHint').textContent = '수정/삭제는 본인만. 작성은 마커 팝오버 “작성”.';
-
-  setWinVisible($('visitsWin'), true);
-  // editor가 열려있어도 겹치지 않게 배치
-  layoutWindows(true);
 
   await loadVisitsAndRender(placeId);
 }
@@ -936,9 +1022,9 @@ async function loadVisitsAndRender(placeId){
         $('visitRating').value = (v.rating ?? '');
         $('visitContent').value = v.content || '';
 
-        setWinVisible($('editorWin'), true);
-        layoutWindows(true);
-        toast('편집 모드');
+        const win = $('editorWin');
+        bringToFront(win);
+        win.style.display = 'block';
       });
 
       div.querySelector('[data-act="del"]').addEventListener('click', async ()=>{
@@ -951,6 +1037,10 @@ async function loadVisitsAndRender(placeId){
         toast('삭제됨');
         await loadVisitsAndRender(placeId);
         await loadMyStats();
+
+        // marker 상태 갱신(카운트 변경)
+        await loadVisitCounts();
+        refreshMarkerImages();
       });
     }
 
@@ -972,8 +1062,9 @@ function openEditorForPlace(){
   $('visitRating').value = '';
   $('visitContent').value = '';
 
-  setWinVisible($('editorWin'), true);
-  layoutWindows(true);
+  const win = $('editorWin');
+  bringToFront(win);
+  win.style.display = 'block';
 }
 
 async function saveVisit(){
@@ -1020,9 +1111,14 @@ async function saveVisit(){
     await loadMyStats();
 
     // visits 창이 열려 있으면 즉시 반영
-    if(isWinVisible($('visitsWin'))){
+    if($('visitsWin').style.display !== 'none'){
       await loadVisitsAndRender(state.selectedPlace.id);
     }
+
+    // marker 상태 갱신(카운트 변경)
+    await loadVisitCounts();
+    refreshMarkerImages();
+
   } finally {
     $('saveVisitBtn').disabled = false;
   }
@@ -1120,13 +1216,16 @@ async function createPlace({ name, address, lat, lng }){
 window.addEventListener('DOMContentLoaded', () => {
   $('visitDate').value = todayISO();
 
-  // draggable windows
   makeDraggable($('visitsWin'), $('visitsDragBar'));
   makeDraggable($('editorWin'), $('editorDragBar'));
 
-  // close buttons (확실히 작동)
-  $('closeVisitsBtn').addEventListener('click', (e)=>{ e.stopPropagation(); setWinVisible($('visitsWin'), false); });
-  $('closeEditorBtn').addEventListener('click', (e)=>{ e.stopPropagation(); setWinVisible($('editorWin'), false); });
+  // 창 클릭하면 앞으로
+  $('visitsWin').addEventListener('pointerdown', ()=> bringToFront($('visitsWin')));
+  $('editorWin').addEventListener('pointerdown', ()=> bringToFront($('editorWin')));
+
+  // close buttons
+  $('closeVisitsBtn').addEventListener('click', (e)=>{ e.stopPropagation(); $('visitsWin').style.display = 'none'; });
+  $('closeEditorBtn').addEventListener('click', (e)=>{ e.stopPropagation(); $('editorWin').style.display = 'none'; });
 
   $('cancelEditBtn').addEventListener('click', ()=>{
     state.editingVisitId = null;
@@ -1155,15 +1254,18 @@ window.addEventListener('DOMContentLoaded', () => {
   $('closeSignupBtn').addEventListener('click', ()=> close($('signupOverlay')));
 
   $('accountOpenBtn').addEventListener('click', async ()=>{
+    if(!requireSb()) return;
     open($('accountOverlay'));
     $('accountLine').textContent = state.user?.email || '';
-    $('nickname').value = state.myProfile?.nickname || '';
+    $('nickname').value = getMyNickname() || '';
     await loadMyStats();
   });
   $('closeAccountBtn').addEventListener('click', ()=> close($('accountOverlay')));
 
-  // login/signup actions
+  // login
   $('loginBtn').addEventListener('click', async ()=>{
+    if(!requireSb()) return;
+
     const email = ($('loginEmail').value || '').trim();
     const password = $('loginPassword').value || '';
     if(!email || !password){ toast('이메일/비번 입력'); return; }
@@ -1172,17 +1274,22 @@ window.addEventListener('DOMContentLoaded', () => {
     try{
       const { error } = await state.sb.auth.signInWithPassword({ email, password });
       if(error){ console.error(error); toast(error.message || '로그인 실패'); return; }
+
       toast('로그인 됨');
       close($('loginOverlay'));
-      await ensureMyProfile();
-      await loadMyStats();
-      updateDockUI();
+      await afterLoginOrRefresh();
+      await loadPlaces();
+      await loadVisitCounts();
+      renderMarkers();
     } finally {
       $('loginBtn').disabled = false;
     }
   });
 
+  // signup
   $('signupBtn').addEventListener('click', async ()=>{
+    if(!requireSb()) return;
+
     const nickname = ($('signupNickname').value || '').trim();
     const email = ($('signupEmail').value || '').trim();
     const password = $('signupPassword').value || '';
@@ -1192,41 +1299,63 @@ window.addEventListener('DOMContentLoaded', () => {
 
     $('signupBtn').disabled = true;
     try{
-      const { error } = await state.sb.auth.signUp({
+      const { data, error } = await state.sb.auth.signUp({
         email, password,
         options: { data: { nickname } }
       });
       if(error){ console.error(error); toast(error.message || '회원가입 실패'); return; }
-      toast('회원가입 완료. 이제 로그인해줘.');
-      close($('signupOverlay'));
-      open($('loginOverlay'));
+
+      // 이메일 인증 설정에 따라 session이 없을 수 있음
+      if(data?.session){
+        toast('회원가입+로그인 완료');
+        close($('signupOverlay'));
+        await afterLoginOrRefresh();
+      } else {
+        toast('회원가입 완료. 이메일 인증이 필요할 수 있어.');
+        close($('signupOverlay'));
+        open($('loginOverlay'));
+      }
     } finally {
       $('signupBtn').disabled = false;
     }
   });
 
+  // nickname save (업서트 + 메타데이터 동기화)
   $('saveNickBtn').addEventListener('click', async ()=>{
+    if(!requireSb()) return;
     if(!state.user){ toast('로그인 필요'); return; }
+
     const nickname = ($('nickname').value || '').trim();
     if(!nickname){ toast('닉네임은 비울 수 없음'); return; }
 
     $('saveNickBtn').disabled = true;
     try{
-      const { error } = await state.sb.from('profiles').update({ nickname }).eq('id', state.user.id);
-      if(error){ console.error(error); toast('닉네임 변경 실패(중복일 수 있음)'); return; }
-      state.myProfile = { id: state.user.id, nickname };
-      state.nameByUserId.set(state.user.id, nickname);
-      toast('닉네임 변경됨');
+      await upsertMyProfile(nickname);
+
+      // auth 메타데이터도 동기화 (가능하면)
+      try{
+        await state.sb.auth.updateUser({ data: { nickname } });
+        // 세션 갱신 반영
+        const { data } = await state.sb.auth.getSession();
+        state.user = data?.session?.user ?? state.user;
+      } catch (e) {
+        // 메타데이터 동기화가 막혀도 앱은 profiles 기준으로 동작
+      }
+
+      await ensureMyProfile(); // 즉시 재확인
+      toast('닉네임 저장됨');
       updateDockUI();
 
-      await loadPlaces();
-      if(state.selectedPlace) renderPlaceOverlay(state.selectedPlace);
+    } catch (e){
+      console.error(e);
+      toast('닉네임 저장 실패(중복일 수 있음)');
     } finally {
       $('saveNickBtn').disabled = false;
     }
   });
 
   $('logoutBtn').addEventListener('click', async ()=>{
+    if(!requireSb()) return;
     await state.sb.auth.signOut();
     toast('로그아웃');
     close($('accountOverlay'));
@@ -1280,6 +1409,9 @@ window.addEventListener('DOMContentLoaded', () => {
           $('geoStatus').textContent = '';
 
           await loadPlaces();
+          await loadVisitCounts();
+          renderMarkers();
+
           await openPlace(res.id);
           if(!res.existed) await loadMyStats();
         });
@@ -1302,18 +1434,20 @@ window.addEventListener('DOMContentLoaded', () => {
     if(!hit){ toast('검색 결과 없음'); return; }
     await openPlace(hit.id);
   });
-
-  window.addEventListener('resize', ()=> layoutWindows(false));
 });
 
 /* ===== boot ===== */
 window.addEventListener('load', async ()=>{
   initMap();
   await initSupabase();
+  if(!state.sbReady) return;
+
   await loadPlaces();
+  await loadVisitCounts();
+  renderMarkers();
+
   if(state.user){
-    await ensureMyProfile();
-    await loadMyStats();
+    await afterLoginOrRefresh();
     updateDockUI();
   }
 });
