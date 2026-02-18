@@ -13,26 +13,23 @@
       --text:#eef1f8;
       --muted:rgba(238,241,248,.65);
 
-      /* 톤다운 글래스 */
       --glass:rgba(18,20,28,.74);
-      --glass2:rgba(18,20,28,.84);
+      --glass2:rgba(18,20,28,.86);
       --line:rgba(255,255,255,.12);
 
       --shadow:0 18px 52px rgba(0,0,0,.38);
-      --r:18px;
       --pill:999px;
 
       --accent:#6aa6ff;
       --hot:#ff4d6d;
-      --ok:#6aa6ff;
-      --warn:#ffd166;
+      --mid:#a06bff;
+      --low:#8aa0bd;
+      --ring:rgba(255,255,255,.85);
     }
-
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif;color:var(--text)}
     #map{position:fixed;inset:0}
 
-    /* bottom dock (짧고 중앙) */
     .dock{
       position:fixed;
       left:50%; transform:translateX(-50%);
@@ -69,10 +66,15 @@
       border-radius:var(--pill);
       cursor:pointer;
       white-space:nowrap;
+      user-select:none;
     }
     button.primary{
-      background:rgba(106,166,255,.14);
-      border-color:rgba(106,166,255,.40);
+      background:rgba(106,166,255,.16);
+      border-color:rgba(106,166,255,.45);
+    }
+    button.danger{
+      background:rgba(255,77,109,.12);
+      border-color:rgba(255,77,109,.35);
     }
     button:disabled{opacity:.55; cursor:not-allowed}
     .dock .right{display:flex; gap:8px; align-items:center}
@@ -81,7 +83,6 @@
       button{padding:10px 10px}
     }
 
-    /* draggable floating windows */
     .float{
       position:fixed;
       background:var(--glass2);
@@ -103,7 +104,7 @@
       margin:0; font-size:14px; line-height:1.25;
       font-weight:950; flex:1; min-width:0;
     }
-    .floatBody{padding:14px; max-height:70vh; overflow:auto}
+    .floatBody{padding:14px; max-height:72vh; overflow:auto}
     .hint{font-size:12px; color:var(--muted); line-height:1.45}
     .sub{margin-top:6px; color:var(--muted); font-size:12px; line-height:1.35; word-break:break-word}
 
@@ -137,11 +138,10 @@
       outline:none;
       font-size:13px;
     }
-    textarea{min-height:170px; resize:vertical; line-height:1.55}
+    textarea{min-height:180px; resize:vertical; line-height:1.55}
     .grid{display:grid; grid-template-columns:1fr 140px; gap:10px}
     .row{display:flex; gap:8px; justify-content:flex-end; margin-top:10px}
 
-    /* overlays */
     .overlay{
       position:fixed; inset:0;
       background:rgba(0,0,0,.35);
@@ -151,13 +151,14 @@
     }
     .overlay.open{display:flex}
     .modal{
-      width:min(720px,96vw);
+      width:min(760px,96vw);
       background:var(--glass2);
       border:1px solid var(--line);
       border-radius:22px;
       box-shadow:var(--shadow);
       backdrop-filter:blur(18px);
       overflow:hidden;
+      pointer-events:auto;
     }
     .modalHeader{
       padding:14px 16px;
@@ -173,17 +174,17 @@
       border-radius:16px;
       background:rgba(0,0,0,.12);
       cursor:pointer;
+      pointer-events:auto;
     }
-    .resultItem:hover{border-color:rgba(106,166,255,.45)}
+    .resultItem:hover{border-color:rgba(106,166,255,.55)}
     .resultItem .t{font-weight:950; font-size:13px; margin-bottom:4px}
     .resultItem .s{font-size:12px; color:var(--muted); line-height:1.35}
 
-    /* toast */
     .toast{
       position:fixed;
       left:50%; transform:translateX(-50%);
       bottom:82px;
-      background:rgba(18,20,28,.86);
+      background:rgba(18,20,28,.92);
       border:1px solid var(--line);
       border-radius:var(--pill);
       padding:10px 14px;
@@ -197,8 +198,8 @@
 
     /* Kakao place popover */
     .kpop{
-      width:270px;
-      background:rgba(18,20,28,.90);
+      width:280px;
+      background:rgba(18,20,28,.92);
       border:1px solid var(--line);
       border-radius:18px;
       box-shadow:var(--shadow);
@@ -212,17 +213,27 @@
     .kpopMeta{margin-top:6px;color:rgba(238,241,248,.52);font-size:12px}
     .kpopBtns{display:flex;gap:8px;padding:10px 12px}
     .kpopBtns button{flex:1;padding:9px 10px}
+    .kpopAdmin{display:flex; gap:8px; padding:0 12px 12px; justify-content:flex-end}
+    .kpopAdmin button{padding:8px 10px}
 
-    /* draggable headers */
     .dragBar{ cursor:grab; }
     .dragBar:active{ cursor:grabbing; }
+
+    .pinBtn{
+      padding:8px 10px;
+      border-radius:14px;
+      display:inline-flex; gap:8px; align-items:center;
+    }
+    .pinOn{
+      background:rgba(255,255,255,.10);
+      border-color:rgba(255,255,255,.22);
+    }
   </style>
 </head>
 
 <body>
   <div id="map"></div>
 
-  <!-- bottom dock -->
   <div class="dock">
     <div class="search" title="가게/주소 검색 (Enter)">
       <span style="opacity:.75">🔎</span>
@@ -232,19 +243,18 @@
     <div class="right">
       <button id="addBtn" class="primary">추가</button>
 
-      <!-- logged out -->
       <button id="loginOpenBtn">로그인</button>
       <button id="signupOpenBtn">회원가입</button>
 
-      <!-- logged in -->
       <button id="accountOpenBtn" style="display:none">계정</button>
     </div>
   </div>
 
   <!-- Visits window -->
-  <aside id="visitsWin" class="float" style="display:none; width:min(560px,94vw); left:auto; right:14px; top:14px;">
+  <aside id="visitsWin" class="float" style="display:none; width:min(620px,94vw); right:14px; top:14px;">
     <div class="floatHeader dragBar" id="visitsDragBar">
       <h3 id="visitsTitle">방문 기록</h3>
+      <button id="visitsPinBtn" class="pinBtn" title="핀 고정">📌</button>
       <button id="closeVisitsBtn">닫기</button>
     </div>
     <div class="floatBody">
@@ -254,13 +264,14 @@
   </aside>
 
   <!-- Editor window -->
-  <aside id="editorWin" class="float" style="display:none; width:min(700px,94vw); left:14px; top:14px;">
+  <aside id="editorWin" class="float" style="display:none; width:min(760px,94vw); left:14px; top:14px;">
     <div class="floatHeader dragBar" id="editorDragBar">
       <h3 id="editorTitle">방문기 작성</h3>
+      <button id="editorPinBtn" class="pinBtn" title="핀 고정">📌</button>
       <button id="closeEditorBtn">닫기</button>
     </div>
     <div class="floatBody">
-      <div class="hint">헤더를 드래그해서 창을 옮길 수 있어.</div>
+      <div class="hint" id="editorHint">핀 OFF면 다른 가게 “작성” 버튼으로 이 창을 재사용할 수 있어.</div>
 
       <div style="margin-top:12px" class="grid">
         <div>
@@ -285,6 +296,38 @@
 
       <div class="hint" style="margin-top:10px">
         작성자 표시는 닉네임. (닉네임 없으면 작성 불가)
+      </div>
+    </div>
+  </aside>
+
+  <!-- Place manage window -->
+  <aside id="placeWin" class="float" style="display:none; width:min(640px,94vw); left:14px; top:90px;">
+    <div class="floatHeader dragBar" id="placeDragBar">
+      <h3 id="placeTitle">가게 관리</h3>
+      <button id="closePlaceBtn">닫기</button>
+    </div>
+    <div class="floatBody">
+      <div class="hint" id="placeHint">가게 수정/삭제는 “추가한 사람”만 가능.</div>
+
+      <div class="cardItem" style="margin-top:12px">
+        <label>가게 이름</label>
+        <input id="editPlaceName" />
+        <label style="margin-top:10px">주소</label>
+        <input id="editPlaceAddr" />
+
+        <div class="row" style="justify-content:flex-start;margin-top:10px">
+          <button id="placeAddrSearchBtn" class="primary">주소 후보 보기</button>
+          <span id="placeGeoStatus" class="hint"></span>
+        </div>
+        <div id="placeResults" class="results"></div>
+
+        <div class="row" style="margin-top:12px">
+          <button id="savePlaceBtn" class="primary">수정 저장</button>
+          <button id="deletePlaceBtn" class="danger">가게 삭제</button>
+        </div>
+        <div class="hint" style="margin-top:10px">
+          삭제 시 해당 가게의 방문기록도 함께 삭제돼.
+        </div>
       </div>
     </div>
   </aside>
@@ -338,7 +381,7 @@
           <div class="row">
             <button id="loginBtn" class="primary">로그인</button>
           </div>
-          <div class="hint" style="margin-top:10px">로그인이 안 되면 콘솔(F12) 에러를 같이 봐야 빨라.</div>
+          <div class="hint" style="margin-top:10px">에러가 나면 토스트 메시지로 이유가 나와.</div>
         </div>
       </div>
     </div>
@@ -362,7 +405,7 @@
           <div class="row">
             <button id="signupBtn" class="primary">회원가입</button>
           </div>
-          <div class="hint" style="margin-top:10px">이메일 인증이 켜져 있으면 회원가입 후 메일 확인이 필요할 수 있어.</div>
+          <div class="hint" style="margin-top:10px">이메일 인증 설정에 따라 가입 후 메일 확인이 필요할 수 있어.</div>
         </div>
       </div>
     </div>
@@ -387,7 +430,7 @@
               <button id="saveNickBtn" class="primary">닉네임 저장</button>
               <button id="logoutBtn">로그아웃</button>
             </div>
-            <div class="hint" style="margin-top:8px">닉네임 저장 후 바로 추가/작성 가능해야 정상.</div>
+            <div class="hint" style="margin-top:8px">저장 후 바로 추가/작성 가능해야 정상.</div>
           </div>
 
           <div style="margin-top:14px">
@@ -428,11 +471,10 @@ function toast(msg){
   $('toastText').textContent = msg;
   $('toast').classList.add('show');
   clearTimeout(toast._tm);
-  toast._tm = setTimeout(()=> $('toast').classList.remove('show'), 2400);
+  toast._tm = setTimeout(()=> $('toast').classList.remove('show'), 2600);
 }
 function open(el){ el.classList.add('open'); }
 function close(el){ el.classList.remove('open'); }
-
 function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
 
 const state = {
@@ -447,22 +489,36 @@ const state = {
   geocoder: null,
 
   places: [],
-  markers: new Map(),          // placeId -> Marker
-  visitCounts: new Map(),      // placeId -> count
+  markers: new Map(),     // placeId -> Marker
+  visitCounts: new Map(), // placeId -> count
   selectedPlace: null,
+
+  // windows
+  visits: { pin:false, placeId:null },
+  editor: { pin:false, placeId:null },
+  place:  { placeId:null },
 
   editingVisitId: null,
 
   placeOverlay: null,
   placeOverlayEl: null,
 
-  markerImageCache: new Map(), // key -> MarkerImage
+  markerImageCache: new Map(),
+  zTop: 1600,
 
-  zTop: 1600
+  addBusy: false,
+  placeBusy: false
 };
 
 function configured(){
   return SB_URL && SB_KEY && !SB_URL.includes("YOUR_") && !SB_KEY.includes("YOUR_");
+}
+function requireSb(){
+  if(!state.sbReady || !state.sb){
+    toast('초기화 중… 새로고침 후 다시');
+    return false;
+  }
+  return true;
 }
 
 function getMyNickname(){
@@ -472,21 +528,10 @@ function getMyNickname(){
   if(b) return b;
   return '';
 }
-function hasNickname(){
-  return !!getMyNickname();
-}
-
-function requireSb(){
-  if(!state.sbReady || !state.sb){
-    toast('초기화 중… 새로고침 후 다시');
-    return false;
-  }
-  return true;
-}
+function hasNickname(){ return !!getMyNickname(); }
 
 function requireNicknameOrGuide(){
   if(!requireSb()) return false;
-
   if(!state.user){
     toast('로그인 필요');
     open($('loginOverlay'));
@@ -499,7 +544,6 @@ function requireNicknameOrGuide(){
   }
   return true;
 }
-
 function displayName(user_id, fallbackEmail){
   const nick = state.nameByUserId.get(user_id);
   if(nick && String(nick).trim()) return nick;
@@ -512,13 +556,17 @@ function bringToFront(el){
   el.style.zIndex = String(state.zTop);
 }
 
-/* ===== draggable windows (자동 정렬 삭제, 수동만) ===== */
+function setPinUI(btn, isOn){
+  btn.classList.toggle('pinOn', !!isOn);
+  btn.textContent = isOn ? '📌 ON' : '📌';
+}
+
+/* ===== draggable windows ===== */
 function makeDraggable(winEl, barEl){
   let dragging = false;
   let startX=0, startY=0, startLeft=0, startTop=0;
 
   const onDown = (e)=>{
-    // 버튼/입력에서 드래그 시작하지 않음 (닫기/클릭 정상화)
     if(e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea')) return;
     if(e.button !== 0) return;
 
@@ -545,7 +593,7 @@ function makeDraggable(winEl, barEl){
 
     winEl.style.left = newLeft + 'px';
     winEl.style.top  = newTop + 'px';
-    winEl.style.right = 'auto'; // right 고정 해제
+    winEl.style.right = 'auto';
   };
 
   const onUp = (e)=>{
@@ -560,7 +608,7 @@ function makeDraggable(winEl, barEl){
   barEl.addEventListener('pointercancel', onUp);
 }
 
-/* ===== Kakao Map / overlay ===== */
+/* ===== Kakao Map ===== */
 function initMap(){
   if(!(window.kakao && window.kakao.maps)){
     toast('카카오 지도 SDK 로딩 실패 (키/도메인/카카오맵 ON 확인)');
@@ -570,11 +618,9 @@ function initMap(){
   state.map = new kakao.maps.Map($('map'), { center, level: 6 });
   state.geocoder = new kakao.maps.services.Geocoder();
 
-  // place overlay element
   state.placeOverlayEl = document.createElement('div');
   state.placeOverlayEl.style.pointerEvents = 'auto';
 
-  // prevent map click from firing when clicking overlay
   ['pointerdown','mousedown','touchstart','click'].forEach(ev=>{
     state.placeOverlayEl.addEventListener(ev, (e)=> e.stopPropagation(), { passive:false });
   });
@@ -586,18 +632,15 @@ function initMap(){
     zIndex: 1500
   });
 
-  kakao.maps.event.addListener(state.map, 'click', () => {
-    hidePlaceOverlay();
-  });
+  kakao.maps.event.addListener(state.map, 'click', () => hidePlaceOverlay());
 }
-
 function hidePlaceOverlay(){
   if(state.placeOverlay) state.placeOverlay.setMap(null);
 }
-
 function renderPlaceOverlay(place){
   if(!place) return;
   const author = displayName(place.user_id);
+  const isMine = !!(state.user && place.user_id === state.user.id);
 
   state.placeOverlayEl.innerHTML = `
     <div class="kpop">
@@ -610,6 +653,11 @@ function renderPlaceOverlay(place){
         <button id="kpopVisits">기록</button>
         <button id="kpopWrite" class="primary">작성</button>
       </div>
+      ${isMine ? `
+        <div class="kpopAdmin">
+          <button id="kpopManage">관리</button>
+        </div>
+      ` : ``}
     </div>
   `;
 
@@ -617,11 +665,14 @@ function renderPlaceOverlay(place){
     if(!state.selectedPlace) return;
     await openVisitsForPlace(state.selectedPlace.id);
   });
-
-  state.placeOverlayEl.querySelector('#kpopWrite')?.addEventListener('click', () => {
+  state.placeOverlayEl.querySelector('#kpopWrite')?.addEventListener('click', async () => {
     if(!requireNicknameOrGuide()) return;
     if(!state.selectedPlace){ toast('가게부터 선택'); return; }
-    openEditorForPlace();
+    await openEditorForPlace(state.selectedPlace.id);
+  });
+  state.placeOverlayEl.querySelector('#kpopManage')?.addEventListener('click', async () => {
+    if(!requireNicknameOrGuide()) return;
+    await openPlaceManage(state.selectedPlace.id);
   });
 
   const pos = new kakao.maps.LatLng(place.lat, place.lng);
@@ -629,71 +680,40 @@ function renderPlaceOverlay(place){
   state.placeOverlay.setMap(state.map);
 }
 
-/* ===== marker images (별/하트 상태별) ===== */
-function svgMarker({ shape, variant, size }){
-  // shape: "star" | "heart"
-  // variant: "outline" | "fill" | "hot" | "selectedOutline" | "selectedFill"
+/* ===== Heart marker images (fixed heart, strong status diffs) ===== */
+function svgHeartMarker({ size, fill, stroke, ring, glow, selected }){
   const S = size;
   const cx = S/2, cy = S/2;
 
-  // colors
-  let fill = 'none';
-  let stroke = 'rgba(255,255,255,.88)';
-  let glyph = '#6aa6ff';
-
-  const bg = 'rgba(18,20,28,.78)';
-  const ring = 'rgba(255,255,255,.75)';
-
-  if(variant === 'outline'){
-    fill = 'none';
-    glyph = '#6aa6ff';
-  } else if(variant === 'fill'){
-    fill = '#6aa6ff';
-    glyph = '#6aa6ff';
-  } else if(variant === 'hot'){
-    fill = '#ff4d6d';
-    glyph = '#ff4d6d';
-  } else if(variant === 'selectedOutline'){
-    fill = 'none';
-    glyph = '#ff4d6d';
-  } else if(variant === 'selectedFill'){
-    fill = '#ff4d6d';
-    glyph = '#ff4d6d';
-  }
-
-  // star path (5-point)
-  const starPath = `
-    M ${cx} ${S*0.20}
-    L ${S*0.61} ${S*0.38}
-    L ${S*0.78} ${S*0.65}
-    L ${S*0.50} ${S*0.78}
-    L ${S*0.22} ${S*0.65}
-    L ${S*0.39} ${S*0.38}
-    Z
-  `.trim();
-
-  // heart path
   const heartPath = `
-    M ${S*0.50} ${S*0.75}
-    C ${S*0.20} ${S*0.58}, ${S*0.18} ${S*0.36}, ${S*0.32} ${S*0.28}
-    C ${S*0.42} ${S*0.22}, ${S*0.48} ${S*0.28}, ${S*0.50} ${S*0.32}
-    C ${S*0.52} ${S*0.28}, ${S*0.58} ${S*0.22}, ${S*0.68} ${S*0.28}
-    C ${S*0.82} ${S*0.36}, ${S*0.80} ${S*0.58}, ${S*0.50} ${S*0.75}
+    M ${S*0.50} ${S*0.78}
+    C ${S*0.18} ${S*0.60}, ${S*0.18} ${S*0.34}, ${S*0.34} ${S*0.26}
+    C ${S*0.45} ${S*0.20}, ${S*0.49} ${S*0.28}, ${S*0.50} ${S*0.33}
+    C ${S*0.51} ${S*0.28}, ${S*0.55} ${S*0.20}, ${S*0.66} ${S*0.26}
+    C ${S*0.82} ${S*0.34}, ${S*0.82} ${S*0.60}, ${S*0.50} ${S*0.78}
     Z
   `.trim();
 
-  const path = (shape === 'heart') ? heartPath : starPath;
+  const bg = 'rgba(18,20,28,.82)';
 
   const svg = `
   <svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
     <defs>
       <filter id="ds" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,.55)"/>
+        <feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="rgba(0,0,0,.60)"/>
       </filter>
+      ${glow ? `
+      <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+        <feDropShadow dx="0" dy="0" stdDeviation="3.2" flood-color="${glow}"/>
+      </filter>` : ``}
     </defs>
+
     <g filter="url(#ds)">
-      <circle cx="${cx}" cy="${cy}" r="${S*0.40}" fill="${bg}" stroke="${ring}" stroke-width="${Math.max(1.3, S*0.06)}"/>
-      <path d="${path}" fill="${fill}" stroke="${glyph}" stroke-width="${Math.max(1.6, S*0.07)}" stroke-linejoin="round" />
+      <circle cx="${cx}" cy="${cy}" r="${S*0.42}" fill="${bg}" stroke="${ring}" stroke-width="${Math.max(1.6, S*0.06)}"/>
+      <g ${glow ? `filter="url(#glow)"` : ``}>
+        <path d="${heartPath}" fill="${fill}" stroke="${stroke}" stroke-width="${Math.max(2.0, S*0.075)}" stroke-linejoin="round"/>
+      </g>
+      ${selected ? `<circle cx="${cx}" cy="${cy}" r="${S*0.47}" fill="none" stroke="rgba(255,255,255,.92)" stroke-width="${Math.max(2.2, S*0.07)}"/>` : ``}
     </g>
   </svg>`;
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
@@ -703,26 +723,32 @@ function markerImageForPlace(placeId){
   const count = state.visitCounts.get(placeId) || 0;
   const selected = state.selectedPlace?.id === placeId;
 
-  let shape = 'star';
-  let variant = 'outline';
-  let size = 26;
+  // 상태를 확실하게:
+  // 0회: 작은 아웃라인(회청)
+  // 1-2: 중간 크기 파랑 채움
+  // 3-5: 큰 보라 채움
+  // 6+: 매우 큼 빨강 + 글로우
+  let size = 24, fill = 'none', stroke = 'rgba(138,160,189,.95)', ring = 'rgba(255,255,255,.70)', glow = null;
 
-  if(selected){
-    shape = 'heart';
-    size = 30;
-    variant = (count > 0) ? 'selectedFill' : 'selectedOutline';
+  if(count === 0){
+    size = 24; fill = 'none'; stroke = 'rgba(138,160,189,.95)'; ring = 'rgba(255,255,255,.70)';
+  } else if(count <= 2){
+    size = 28; fill = 'rgba(106,166,255,.92)'; stroke = 'rgba(106,166,255,.98)'; ring = 'rgba(255,255,255,.74)';
+  } else if(count <= 5){
+    size = 34; fill = 'rgba(160,107,255,.92)'; stroke = 'rgba(160,107,255,.98)'; ring = 'rgba(255,255,255,.78)';
   } else {
-    shape = 'star';
-    size = 26;
-    if(count === 0) variant = 'outline';
-    else if(count < 3) variant = 'fill';
-    else variant = 'hot';
+    size = 40; fill = 'rgba(255,77,109,.92)'; stroke = 'rgba(255,77,109,.98)'; ring = 'rgba(255,255,255,.82)'; glow = 'rgba(255,77,109,.75)';
   }
 
-  const key = `${shape}:${variant}:${size}`;
+  if(selected){
+    size += 6;
+    ring = 'rgba(255,255,255,.92)';
+  }
+
+  const key = `heart:${countBucket(count)}:${selected?'sel':'n'}:${size}`;
   if(state.markerImageCache.has(key)) return state.markerImageCache.get(key);
 
-  const url = svgMarker({ shape, variant, size });
+  const url = svgHeartMarker({ size, fill, stroke, ring, glow, selected });
   const img = new kakao.maps.MarkerImage(
     url,
     new kakao.maps.Size(size, size),
@@ -730,6 +756,17 @@ function markerImageForPlace(placeId){
   );
   state.markerImageCache.set(key, img);
   return img;
+}
+function countBucket(c){
+  if(c<=0) return '0';
+  if(c<=2) return '1';
+  if(c<=5) return '2';
+  return '3';
+}
+function refreshMarkerImages(){
+  for(const [pid, marker] of state.markers.entries()){
+    marker.setImage(markerImageForPlace(pid));
+  }
 }
 
 /* ===== Supabase ===== */
@@ -745,9 +782,7 @@ async function initSupabase(){
   const { data } = await state.sb.auth.getSession();
   state.user = data?.session?.user ?? null;
 
-  if(state.user){
-    await afterLoginOrRefresh();
-  }
+  if(state.user) await afterLoginOrRefresh();
   updateDockUI();
 
   state.sb.auth.onAuthStateChange(async (_event, session) => {
@@ -765,7 +800,7 @@ async function initSupabase(){
 }
 
 async function afterLoginOrRefresh(){
-  await ensureMyProfile();     // 프로필 없으면 만들기/업서트
+  await ensureMyProfile();
   await loadMyStats();
   updateDockUI();
 }
@@ -780,7 +815,6 @@ async function fetchNicknames(userIds){
     .in('id', ids);
 
   if(error){ console.error(error); return; }
-
   for(const row of (data ?? [])){
     state.nameByUserId.set(row.id, row.nickname || '');
   }
@@ -801,12 +835,10 @@ async function upsertMyProfile(nickname){
 
   if(error){
     console.error(error);
-    // 프로필 RLS가 꼬여도 최소한 메타데이터로는 진행 가능하게
     state.myProfile = { id: u.id, nickname: nick };
     state.nameByUserId.set(u.id, nick);
     return;
   }
-
   state.myProfile = data;
   state.nameByUserId.set(u.id, data.nickname || '');
 }
@@ -826,13 +858,10 @@ async function ensureMyProfile(){
     await upsertMyProfile(u.user_metadata?.nickname || '');
     return;
   }
-
   if(!data){
-    // 프로필 행이 없으면 생성
     await upsertMyProfile(u.user_metadata?.nickname || '');
     return;
   }
-
   state.myProfile = data;
   state.nameByUserId.set(u.id, data.nickname || '');
 }
@@ -856,11 +885,9 @@ async function loadMyStats(){
 
 function updateDockUI(){
   const loggedIn = !!state.user;
-
   $('loginOpenBtn').style.display = loggedIn ? 'none' : 'inline-flex';
   $('signupOpenBtn').style.display = loggedIn ? 'none' : 'inline-flex';
   $('accountOpenBtn').style.display = loggedIn ? 'inline-flex' : 'none';
-
   if(loggedIn){
     $('accountOpenBtn').textContent = getMyNickname() ? getMyNickname() : '계정';
   }
@@ -878,7 +905,6 @@ async function loadPlaces(){
 }
 
 async function loadVisitCounts(){
-  // 단순/안전 방식: visits에서 place_id만 가져와서 JS로 카운트
   const { data, error } = await state.sb
     .from('visits')
     .select('place_id');
@@ -888,7 +914,6 @@ async function loadVisitCounts(){
     state.visitCounts = new Map();
     return;
   }
-
   const m = new Map();
   for(const row of (data ?? [])){
     const id = row.place_id;
@@ -921,13 +946,6 @@ function renderMarkers(){
   }
 }
 
-function refreshMarkerImages(){
-  for(const [pid, marker] of state.markers.entries()){
-    marker.setImage(markerImageForPlace(pid));
-  }
-}
-
-/* ===== marker click behavior: overlay only ===== */
 async function openPlace(placeId){
   const place = state.places.find(p => p.id === placeId);
   if(!place) return;
@@ -936,34 +954,64 @@ async function openPlace(placeId){
   await fetchNicknames([place.user_id]);
 
   renderPlaceOverlay(place);
+  refreshMarkerImages();
 
   const pos = new kakao.maps.LatLng(place.lat, place.lng);
   state.map.setCenter(pos);
   state.map.setLevel(Math.min(state.map.getLevel(), 4));
-
-  // selected 상태 반영
-  refreshMarkerImages();
 }
 
-/* ===== Visits window ===== */
+/* ===== Visit / Editor windows + Pin behavior ===== */
+function isVisitsOpen(){ return $('visitsWin').style.display !== 'none'; }
+function isEditorOpen(){ return $('editorWin').style.display !== 'none'; }
+
 async function openVisitsForPlace(placeId){
   if(!state.selectedPlace || state.selectedPlace.id !== placeId){
     state.selectedPlace = state.places.find(p => p.id === placeId) || state.selectedPlace;
   }
   if(!state.selectedPlace){ toast('가게 선택 필요'); return; }
 
+  if(isVisitsOpen() && state.visits.pin && state.visits.placeId && state.visits.placeId !== placeId){
+    toast('기록 창이 핀 고정됨. 핀 해제 후 다른 가게 기록 열기.');
+    return;
+  }
+
+  state.visits.placeId = placeId;
+
   const win = $('visitsWin');
   bringToFront(win);
   win.style.display = 'block';
-  if(!win.style.left && !win.style.right){
-    win.style.right = '14px';
-    win.style.top = '14px';
-  }
 
   $('visitsTitle').textContent = `방문 기록 · ${state.selectedPlace.name}`;
-  $('visitsHint').textContent = '수정/삭제는 본인만. 작성은 마커 팝오버 “작성”.';
+  $('visitsHint').textContent = '수정/삭제는 본인만. 작성은 팝오버 “작성”.';
 
   await loadVisitsAndRender(placeId);
+}
+
+async function openEditorForPlace(placeId){
+  if(!requireNicknameOrGuide()) return;
+
+  if(isEditorOpen() && state.editor.pin && state.editor.placeId && state.editor.placeId !== placeId){
+    toast('작성 창이 핀 고정됨. 핀 해제 후 다른 가게 작성 가능.');
+    return;
+  }
+
+  const place = state.places.find(p => p.id === placeId);
+  if(!place){ toast('가게를 찾지 못함'); return; }
+
+  state.editor.placeId = placeId;
+  state.editingVisitId = null;
+
+  $('editorTitle').textContent = `방문기 작성 · ${place.name}`;
+  $('saveVisitBtn').textContent = '저장';
+  $('cancelEditBtn').style.display = 'none';
+  $('visitDate').value = todayISO();
+  $('visitRating').value = '';
+  $('visitContent').value = '';
+
+  const win = $('editorWin');
+  bringToFront(win);
+  win.style.display = 'block';
 }
 
 async function loadVisitsAndRender(placeId){
@@ -1010,11 +1058,19 @@ async function loadVisitsAndRender(placeId){
     `;
 
     if(isMine){
-      div.querySelector('[data-act="edit"]').addEventListener('click', ()=>{
+      div.querySelector('[data-act="edit"]').addEventListener('click', async ()=>{
         if(!requireNicknameOrGuide()) return;
-        state.editingVisitId = v.id;
 
-        $('editorTitle').textContent = '방문기 수정';
+        if(isEditorOpen() && state.editor.pin && state.editor.placeId && state.editor.placeId !== v.place_id){
+          toast('작성 창이 핀 고정됨. 핀 해제 후 수정 가능.');
+          return;
+        }
+
+        state.editingVisitId = v.id;
+        state.editor.placeId = v.place_id;
+
+        const place = state.places.find(p => p.id === v.place_id);
+        $('editorTitle').textContent = `방문기 수정 · ${place ? place.name : ''}`;
         $('saveVisitBtn').textContent = '수정 저장';
         $('cancelEditBtn').style.display = 'inline-flex';
 
@@ -1032,15 +1088,16 @@ async function loadVisitsAndRender(placeId){
         if(!confirm('이 방문기를 삭제할까?')) return;
 
         const { error } = await state.sb.from('visits').delete().eq('id', v.id);
-        if(error){ console.error(error); toast('삭제 실패'); return; }
+        if(error){ console.error(error); toast(error.message || '삭제 실패'); return; }
 
         toast('삭제됨');
+        // count 갱신(빠르게)
+        const cur = state.visitCounts.get(placeId) || 0;
+        state.visitCounts.set(placeId, Math.max(0, cur-1));
+        refreshMarkerImages();
+
         await loadVisitsAndRender(placeId);
         await loadMyStats();
-
-        // marker 상태 갱신(카운트 변경)
-        await loadVisitCounts();
-        refreshMarkerImages();
       });
     }
 
@@ -1048,28 +1105,11 @@ async function loadVisitsAndRender(placeId){
   }
 }
 
-/* ===== Editor window ===== */
-function openEditorForPlace(){
-  if(!requireNicknameOrGuide()) return;
-  if(!state.selectedPlace){ toast('가게부터 선택'); return; }
-
-  state.editingVisitId = null;
-  $('editorTitle').textContent = `방문기 작성 · ${state.selectedPlace.name}`;
-  $('saveVisitBtn').textContent = '저장';
-  $('cancelEditBtn').style.display = 'none';
-
-  $('visitDate').value = todayISO();
-  $('visitRating').value = '';
-  $('visitContent').value = '';
-
-  const win = $('editorWin');
-  bringToFront(win);
-  win.style.display = 'block';
-}
-
 async function saveVisit(){
   if(!requireNicknameOrGuide()) return;
-  if(!state.selectedPlace){ toast('가게부터 선택'); return; }
+
+  const placeId = state.editor.placeId;
+  if(!placeId){ toast('가게 선택 필요'); return; }
 
   const visited_at = $('visitDate').value || todayISO();
   const ratingRaw = $('visitRating').value;
@@ -1085,46 +1125,51 @@ async function saveVisit(){
         .update({ visited_at, rating, content })
         .eq('id', state.editingVisitId);
 
-      if(error){ console.error(error); toast('수정 실패'); return; }
+      if(error){ console.error(error); toast(error.message || '수정 실패'); return; }
       toast('수정됨');
+
       state.editingVisitId = null;
       $('cancelEditBtn').style.display = 'none';
       $('saveVisitBtn').textContent = '저장';
-      $('editorTitle').textContent = `방문기 작성 · ${state.selectedPlace.name}`;
+
+      const place = state.places.find(p => p.id === placeId);
+      $('editorTitle').textContent = `방문기 작성 · ${place ? place.name : ''}`;
+
     }else{
       const payload = {
         user_id: state.user.id,
         author_email: state.user.email || null,
-        place_id: state.selectedPlace.id,
+        place_id: placeId,
         visited_at,
         rating,
         content
       };
 
       const { error } = await state.sb.from('visits').insert(payload);
-      if(error){ console.error(error); toast('저장 실패'); return; }
+      if(error){ console.error(error); toast(error.message || '저장 실패'); return; }
+
       toast('저장됨');
       $('visitContent').value = '';
       $('visitRating').value = '';
+
+      // count 즉시 반영
+      const cur = state.visitCounts.get(placeId) || 0;
+      state.visitCounts.set(placeId, cur+1);
+      refreshMarkerImages();
     }
 
     await loadMyStats();
 
-    // visits 창이 열려 있으면 즉시 반영
-    if($('visitsWin').style.display !== 'none'){
-      await loadVisitsAndRender(state.selectedPlace.id);
+    // visits 창이 같은 place를 보고 있으면 즉시 반영
+    if(isVisitsOpen() && state.visits.placeId === placeId){
+      await loadVisitsAndRender(placeId);
     }
-
-    // marker 상태 갱신(카운트 변경)
-    await loadVisitCounts();
-    refreshMarkerImages();
-
   } finally {
     $('saveVisitBtn').disabled = false;
   }
 }
 
-/* ===== Duplicate checks / place insert ===== */
+/* ===== Place edit/delete ===== */
 function haversineMeters(lat1,lng1,lat2,lng2){
   const R = 6371000;
   const toRad = (x)=> x*Math.PI/180;
@@ -1147,25 +1192,26 @@ function isSeoulByCoord(lat, lng){
     });
   });
 }
-async function findDuplicateByNameAddress(name, address){
-  const { data, error } = await state.sb
-    .from('places')
-    .select('id, lat, lng')
-    .eq('name', name)
-    .eq('address', address)
-    .limit(1);
+
+async function findDuplicateByNameAddress(name, address, excludeId=null){
+  let q = state.sb.from('places').select('id, lat, lng').eq('name', name).eq('address', address).limit(5);
+  if(excludeId) q = q.neq('id', excludeId);
+  const { data, error } = await q;
   if(error){ console.error(error); return null; }
   return (data && data.length) ? data[0] : null;
 }
-async function findDuplicateByProximity(lat, lng, thresholdMeters = 30){
+async function findDuplicateByProximity(lat, lng, thresholdMeters = 30, excludeId=null){
   const dLat = 0.0006;
   const dLng = 0.00075;
-  const { data, error } = await state.sb
+  let q = state.sb
     .from('places')
     .select('id, lat, lng')
     .gte('lat', lat - dLat).lte('lat', lat + dLat)
     .gte('lng', lng - dLng).lte('lng', lng + dLng)
-    .limit(40);
+    .limit(60);
+  if(excludeId) q = q.neq('id', excludeId);
+
+  const { data, error } = await q;
   if(error){ console.error(error); return null; }
 
   let best=null, bestDist=Infinity;
@@ -1176,23 +1222,24 @@ async function findDuplicateByProximity(lat, lng, thresholdMeters = 30){
   if(best && bestDist <= thresholdMeters) return { ...best, dist: bestDist };
   return null;
 }
+
 async function createPlace({ name, address, lat, lng }){
   if(!requireNicknameOrGuide()) return null;
 
-  const dup1 = await findDuplicateByNameAddress(name, address);
+  // 중복 체크(이름+주소)
+  const dup1 = await findDuplicateByNameAddress(name, address, null);
   if(dup1){
     toast('이미 등록된 가게야. 그쪽으로 이동할게.');
     return { id: dup1.id, existed:true };
   }
-
-  const dup2 = await findDuplicateByProximity(lat, lng, 30);
+  // 중복 체크(근접)
+  const dup2 = await findDuplicateByProximity(lat, lng, 30, null);
   if(dup2){
     toast(`근처(${Math.round(dup2.dist)}m)에 이미 등록된 가게가 있어. 그쪽으로 이동할게.`);
     return { id: dup2.id, existed:true };
   }
 
   const payload = { user_id: state.user.id, name, address, lat, lng };
-
   const { data, error } = await state.sb
     .from('places')
     .insert(payload)
@@ -1201,15 +1248,184 @@ async function createPlace({ name, address, lat, lng }){
 
   if(error){
     console.error(error);
-    const fallback = await findDuplicateByNameAddress(name, address);
-    if(fallback){
-      toast('이미 등록된 가게야. 그쪽으로 이동할게.');
-      return { id: fallback.id, existed:true };
-    }
     toast(error.message || '가게 저장 실패');
     return null;
   }
   return { ...data, existed:false };
+}
+
+async function openPlaceManage(placeId){
+  const place = state.places.find(p => p.id === placeId);
+  if(!place){ toast('가게를 찾지 못함'); return; }
+  if(!(state.user && place.user_id === state.user.id)){
+    toast('이 가게는 너가 추가한 게 아니라서 수정/삭제 불가');
+    return;
+  }
+
+  state.place.placeId = placeId;
+  $('placeTitle').textContent = `가게 관리 · ${place.name}`;
+  $('editPlaceName').value = place.name || '';
+  $('editPlaceAddr').value = place.address || '';
+  $('placeGeoStatus').textContent = '';
+  $('placeResults').innerHTML = '';
+
+  const win = $('placeWin');
+  bringToFront(win);
+  win.style.display = 'block';
+}
+
+async function updatePlace(placeId, { name, address, lat, lng }){
+  const old = state.places.find(p => p.id === placeId);
+  if(!old) return null;
+
+  // 중복 체크(자기 자신 제외)
+  const dup1 = await findDuplicateByNameAddress(name, address, placeId);
+  if(dup1){
+    toast('이미 등록된 가게(이름+주소)가 있어. 수정 불가.');
+    return null;
+  }
+  const dup2 = await findDuplicateByProximity(lat, lng, 30, placeId);
+  if(dup2){
+    toast(`근처(${Math.round(dup2.dist)}m)에 다른 가게가 있어. 수정 불가.`);
+    return null;
+  }
+
+  const { data, error } = await state.sb
+    .from('places')
+    .update({ name, address, lat, lng })
+    .eq('id', placeId)
+    .select('*')
+    .single();
+
+  if(error){
+    console.error(error);
+    toast(error.message || '가게 수정 실패');
+    return null;
+  }
+
+  // local state update
+  const idx = state.places.findIndex(p => p.id === placeId);
+  if(idx >= 0) state.places[idx] = data;
+
+  // marker update
+  const mk = state.markers.get(placeId);
+  if(mk){
+    mk.setPosition(new kakao.maps.LatLng(data.lat, data.lng));
+    mk.setImage(markerImageForPlace(placeId));
+  }
+
+  // overlay update
+  if(state.selectedPlace?.id === placeId){
+    state.selectedPlace = data;
+    renderPlaceOverlay(data);
+    refreshMarkerImages();
+  }
+
+  toast('가게 수정됨');
+  return data;
+}
+
+async function deletePlace(placeId){
+  const place = state.places.find(p => p.id === placeId);
+  if(!place) return;
+  if(!(state.user && place.user_id === state.user.id)){
+    toast('이 가게는 너가 추가한 게 아니라서 삭제 불가');
+    return;
+  }
+  if(!confirm('정말 이 가게를 삭제할까? (방문기록도 함께 삭제됨)')) return;
+
+  // visits 먼저 삭제 (FK cascade가 없어도 안전)
+  const delVisits = await state.sb.from('visits').delete().eq('place_id', placeId);
+  if(delVisits.error){
+    console.error(delVisits.error);
+    toast(delVisits.error.message || '방문기 삭제 실패');
+    return;
+  }
+
+  const delPlace = await state.sb.from('places').delete().eq('id', placeId);
+  if(delPlace.error){
+    console.error(delPlace.error);
+    toast(delPlace.error.message || '가게 삭제 실패');
+    return;
+  }
+
+  // local state remove
+  state.places = state.places.filter(p => p.id !== placeId);
+  state.visitCounts.delete(placeId);
+
+  const mk = state.markers.get(placeId);
+  if(mk) mk.setMap(null);
+  state.markers.delete(placeId);
+
+  if(state.selectedPlace?.id === placeId){
+    state.selectedPlace = null;
+    hidePlaceOverlay();
+  }
+  // windows referencing this place
+  if(state.visits.placeId === placeId && !state.visits.pin){
+    $('visitsWin').style.display = 'none';
+    state.visits.placeId = null;
+  }
+  if(state.editor.placeId === placeId && !state.editor.pin){
+    $('editorWin').style.display = 'none';
+    state.editor.placeId = null;
+  }
+  $('placeWin').style.display = 'none';
+  state.place.placeId = null;
+
+  refreshMarkerImages();
+  await loadMyStats();
+
+  toast('가게 삭제됨');
+}
+
+/* ===== Add / Place address search (event delegation to fix click bug) ===== */
+function setAddBusy(b){
+  state.addBusy = b;
+  $('addrSearchBtn').disabled = b;
+  $('closeAddBtn').disabled = b;
+}
+function setPlaceBusy(b){
+  state.placeBusy = b;
+  $('placeAddrSearchBtn').disabled = b;
+  $('savePlaceBtn').disabled = b;
+  $('deletePlaceBtn').disabled = b;
+}
+
+function renderAddressCandidates(containerEl, candidates, tag){
+  containerEl.innerHTML = '';
+  for(const c of candidates){
+    const div = document.createElement('div');
+    div.className = 'resultItem';
+    div.dataset.tag = tag;
+    div.dataset.lat = String(c.lat);
+    div.dataset.lng = String(c.lng);
+    div.dataset.addr = c.addr;
+    div.dataset.name = c.name || '';
+    div.innerHTML = `
+      <div class="t">${esc(c.name || '')}</div>
+      <div class="s">${esc(c.addr)}</div>
+      <div class="s">좌표: ${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</div>
+    `;
+    containerEl.appendChild(div);
+  }
+}
+
+async function searchAddress(q){
+  return new Promise((resolve)=>{
+    state.geocoder.addressSearch(q, (result, status) => {
+      if(status !== kakao.maps.services.Status.OK || !result || result.length === 0){
+        resolve([]);
+        return;
+      }
+      const arr = result.slice(0, 8).map(r => ({
+        lat: Number(r.y),
+        lng: Number(r.x),
+        addr: (r.address_name || q).trim()
+      }));
+      resolve(arr);
+    });
+  });
 }
 
 /* ===== UI events ===== */
@@ -1218,31 +1434,51 @@ window.addEventListener('DOMContentLoaded', () => {
 
   makeDraggable($('visitsWin'), $('visitsDragBar'));
   makeDraggable($('editorWin'), $('editorDragBar'));
+  makeDraggable($('placeWin'), $('placeDragBar'));
 
-  // 창 클릭하면 앞으로
   $('visitsWin').addEventListener('pointerdown', ()=> bringToFront($('visitsWin')));
   $('editorWin').addEventListener('pointerdown', ()=> bringToFront($('editorWin')));
+  $('placeWin').addEventListener('pointerdown', ()=> bringToFront($('placeWin')));
+
+  // pin buttons
+  setPinUI($('visitsPinBtn'), state.visits.pin);
+  setPinUI($('editorPinBtn'), state.editor.pin);
+
+  $('visitsPinBtn').addEventListener('click', ()=>{
+    state.visits.pin = !state.visits.pin;
+    setPinUI($('visitsPinBtn'), state.visits.pin);
+    toast(state.visits.pin ? '기록 창 핀 ON' : '기록 창 핀 OFF');
+  });
+  $('editorPinBtn').addEventListener('click', ()=>{
+    state.editor.pin = !state.editor.pin;
+    setPinUI($('editorPinBtn'), state.editor.pin);
+    toast(state.editor.pin ? '작성 창 핀 ON' : '작성 창 핀 OFF');
+  });
 
   // close buttons
   $('closeVisitsBtn').addEventListener('click', (e)=>{ e.stopPropagation(); $('visitsWin').style.display = 'none'; });
   $('closeEditorBtn').addEventListener('click', (e)=>{ e.stopPropagation(); $('editorWin').style.display = 'none'; });
+  $('closePlaceBtn').addEventListener('click', (e)=>{ e.stopPropagation(); $('placeWin').style.display = 'none'; });
 
+  // editor actions
   $('cancelEditBtn').addEventListener('click', ()=>{
     state.editingVisitId = null;
     $('cancelEditBtn').style.display = 'none';
     $('saveVisitBtn').textContent = '저장';
-    if(state.selectedPlace) $('editorTitle').textContent = `방문기 작성 · ${state.selectedPlace.name}`;
+    const place = state.places.find(p => p.id === state.editor.placeId);
+    $('editorTitle').textContent = `방문기 작성 · ${place ? place.name : ''}`;
     $('visitDate').value = todayISO();
     $('visitRating').value = '';
     $('visitContent').value = '';
     toast('편집 취소');
   });
-
   $('saveVisitBtn').addEventListener('click', saveVisit);
 
   // add flow
   $('addBtn').addEventListener('click', ()=>{
     if(!requireNicknameOrGuide()) return;
+    $('results').innerHTML = '';
+    $('geoStatus').textContent = '';
     open($('addOverlay'));
   });
   $('closeAddBtn').addEventListener('click', ()=> close($('addOverlay')));
@@ -1277,10 +1513,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
       toast('로그인 됨');
       close($('loginOverlay'));
+
       await afterLoginOrRefresh();
       await loadPlaces();
       await loadVisitCounts();
       renderMarkers();
+      refreshMarkerImages();
     } finally {
       $('loginBtn').disabled = false;
     }
@@ -1305,7 +1543,6 @@ window.addEventListener('DOMContentLoaded', () => {
       });
       if(error){ console.error(error); toast(error.message || '회원가입 실패'); return; }
 
-      // 이메일 인증 설정에 따라 session이 없을 수 있음
       if(data?.session){
         toast('회원가입+로그인 완료');
         close($('signupOverlay'));
@@ -1320,7 +1557,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // nickname save (업서트 + 메타데이터 동기화)
+  // nickname save (업서트 + auth 메타데이터 동기화)
   $('saveNickBtn').addEventListener('click', async ()=>{
     if(!requireSb()) return;
     if(!state.user){ toast('로그인 필요'); return; }
@@ -1331,21 +1568,15 @@ window.addEventListener('DOMContentLoaded', () => {
     $('saveNickBtn').disabled = true;
     try{
       await upsertMyProfile(nickname);
-
-      // auth 메타데이터도 동기화 (가능하면)
       try{
         await state.sb.auth.updateUser({ data: { nickname } });
-        // 세션 갱신 반영
         const { data } = await state.sb.auth.getSession();
         state.user = data?.session?.user ?? state.user;
-      } catch (e) {
-        // 메타데이터 동기화가 막혀도 앱은 profiles 기준으로 동작
-      }
+      } catch {}
 
-      await ensureMyProfile(); // 즉시 재확인
+      await ensureMyProfile();
       toast('닉네임 저장됨');
       updateDockUI();
-
     } catch (e){
       console.error(e);
       toast('닉네임 저장 실패(중복일 수 있음)');
@@ -1362,63 +1593,164 @@ window.addEventListener('DOMContentLoaded', () => {
     updateDockUI();
   });
 
-  // address search
-  $('addrSearchBtn').addEventListener('click', ()=>{
+  // add address search
+  $('addrSearchBtn').addEventListener('click', async ()=>{
     if(!state.geocoder){ toast('지도 준비 안 됨'); return; }
-
     const name = ($('newName').value || '').trim();
     const q = ($('newAddr').value || '').trim();
     if(!name){ toast('가게 이름부터'); return; }
     if(!q){ toast('주소(검색어)부터'); return; }
 
+    setAddBusy(true);
     $('geoStatus').textContent = '찾는 중…';
-    $('results').innerHTML = '';
-
-    state.geocoder.addressSearch(q, (result, status) => {
-      if(status !== kakao.maps.services.Status.OK || !result || result.length === 0){
+    try{
+      const res = await searchAddress(q);
+      if(res.length === 0){
         $('geoStatus').textContent = '결과 없음';
+        $('results').innerHTML = '';
+        return;
+      }
+      $('geoStatus').textContent = `후보 ${res.length}개`;
+      renderAddressCandidates($('results'), res.map(x=>({ ...x, name })), 'add');
+    } finally {
+      setAddBusy(false);
+    }
+  });
+
+  // event delegation: results click (fix intermittent click bug)
+  $('results').addEventListener('click', async (e)=>{
+    const item = e.target.closest('.resultItem');
+    if(!item) return;
+    if(state.addBusy) return;
+
+    const name = (item.dataset.name || '').trim();
+    const addr = (item.dataset.addr || '').trim();
+    const lat = Number(item.dataset.lat);
+    const lng = Number(item.dataset.lng);
+
+    setAddBusy(true);
+    try{
+      const ok = await isSeoulByCoord(lat, lng);
+      if(!ok){ toast('서울이 아니면 저장 안 함'); return; }
+
+      const created = await createPlace({ name, address: addr, lat, lng });
+      if(!created) return;
+
+      close($('addOverlay'));
+      $('newName').value = '';
+      $('newAddr').value = '';
+      $('results').innerHTML = '';
+      $('geoStatus').textContent = '';
+
+      if(created.existed){
+        await loadPlaces();
+        await loadVisitCounts();
+        renderMarkers();
+        await openPlace(created.id);
         return;
       }
 
-      $('geoStatus').textContent = `후보 ${result.length}개`;
+      // UI 즉시 반영 (새로고침 필요 버그 방지 핵심)
+      state.places.unshift(created);
+      state.visitCounts.set(created.id, 0);
 
-      for(const r of result){
-        const lat = Number(r.y);
-        const lng = Number(r.x);
-        const addr = (r.address_name || q).trim();
+      // marker 추가
+      const marker = new kakao.maps.Marker({
+        position: new kakao.maps.LatLng(created.lat, created.lng),
+        image: markerImageForPlace(created.id)
+      });
+      marker.setMap(state.map);
+      kakao.maps.event.addListener(marker, 'click', async () => await openPlace(created.id));
+      state.markers.set(created.id, marker);
 
-        const item = document.createElement('div');
-        item.className = 'resultItem';
-        item.innerHTML = `
-          <div class="t">${esc(name)}</div>
-          <div class="s">${esc(addr)}</div>
-          <div class="s">좌표: ${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
-        `;
+      await loadMyStats();
+      await openPlace(created.id);
+      toast('가게 추가됨');
+    } finally {
+      setAddBusy(false);
+    }
+  });
 
-        item.addEventListener('click', async ()=>{
-          const ok = await isSeoulByCoord(lat, lng);
-          if(!ok){ toast('서울이 아니면 저장 안 함'); return; }
+  // place manage address search
+  $('placeAddrSearchBtn').addEventListener('click', async ()=>{
+    const pid = state.place.placeId;
+    if(!pid) return;
+    const name = ($('editPlaceName').value || '').trim();
+    const q = ($('editPlaceAddr').value || '').trim();
+    if(!name){ toast('가게 이름부터'); return; }
+    if(!q){ toast('주소부터'); return; }
 
-          const res = await createPlace({ name, address: addr, lat, lng });
-          if(!res) return;
-
-          close($('addOverlay'));
-          $('newName').value = '';
-          $('newAddr').value = '';
-          $('results').innerHTML = '';
-          $('geoStatus').textContent = '';
-
-          await loadPlaces();
-          await loadVisitCounts();
-          renderMarkers();
-
-          await openPlace(res.id);
-          if(!res.existed) await loadMyStats();
-        });
-
-        $('results').appendChild(item);
+    setPlaceBusy(true);
+    $('placeGeoStatus').textContent = '찾는 중…';
+    try{
+      const res = await searchAddress(q);
+      if(res.length === 0){
+        $('placeGeoStatus').textContent = '결과 없음';
+        $('placeResults').innerHTML = '';
+        return;
       }
-    });
+      $('placeGeoStatus').textContent = `후보 ${res.length}개`;
+      renderAddressCandidates($('placeResults'), res.map(x=>({ ...x, name })), 'place');
+    } finally {
+      setPlaceBusy(false);
+    }
+  });
+
+  // event delegation: placeResults click
+  $('placeResults').addEventListener('click', (e)=>{
+    const item = e.target.closest('.resultItem');
+    if(!item) return;
+    const addr = (item.dataset.addr || '').trim();
+    $('editPlaceAddr').value = addr;
+    // lat/lng는 save에서 item에서 못 읽으니 임시로 window에 저장
+    $('placeResults').dataset.pickLat = item.dataset.lat;
+    $('placeResults').dataset.pickLng = item.dataset.lng;
+    toast('후보 선택됨. 이제 “수정 저장”');
+  });
+
+  // save place
+  $('savePlaceBtn').addEventListener('click', async ()=>{
+    if(!requireNicknameOrGuide()) return;
+    const pid = state.place.placeId;
+    if(!pid) return;
+
+    const place = state.places.find(p => p.id === pid);
+    if(!place) return;
+
+    const name = ($('editPlaceName').value || '').trim();
+    const address = ($('editPlaceAddr').value || '').trim();
+    if(!name || !address){ toast('이름/주소 필요'); return; }
+
+    // 좌표: 후보를 선택했으면 그걸 쓰고, 아니면 기존 좌표 유지
+    const lat = $('placeResults').dataset.pickLat ? Number($('placeResults').dataset.pickLat) : place.lat;
+    const lng = $('placeResults').dataset.pickLng ? Number($('placeResults').dataset.pickLng) : place.lng;
+
+    setPlaceBusy(true);
+    try{
+      const ok = await isSeoulByCoord(lat, lng);
+      if(!ok){ toast('서울이 아니면 저장 안 함'); return; }
+      const updated = await updatePlace(pid, { name, address, lat, lng });
+      if(!updated) return;
+
+      $('placeTitle').textContent = `가게 관리 · ${updated.name}`;
+      $('placeResults').innerHTML = '';
+      $('placeResults').dataset.pickLat = '';
+      $('placeResults').dataset.pickLng = '';
+    } finally {
+      setPlaceBusy(false);
+    }
+  });
+
+  $('deletePlaceBtn').addEventListener('click', async ()=>{
+    if(!requireNicknameOrGuide()) return;
+    const pid = state.place.placeId;
+    if(!pid) return;
+    setPlaceBusy(true);
+    try{
+      await deletePlace(pid);
+    } finally {
+      setPlaceBusy(false);
+    }
   });
 
   // search
@@ -1445,11 +1777,16 @@ window.addEventListener('load', async ()=>{
   await loadPlaces();
   await loadVisitCounts();
   renderMarkers();
+  refreshMarkerImages();
 
   if(state.user){
     await afterLoginOrRefresh();
     updateDockUI();
   }
+
+  // default pin UI
+  setPinUI($('visitsPinBtn'), state.visits.pin);
+  setPinUI($('editorPinBtn'), state.editor.pin);
 });
 </script>
 </body>
