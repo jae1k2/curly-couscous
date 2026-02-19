@@ -6,265 +6,286 @@
   <title>Seoul Shared Eats</title>
 
   <!-- Kakao Maps -->
-  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=5c2fb05e6765f133c747e1f5a2bdf64d
-&libraries=services"></script>
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=5c2fb05e6765f133c747e1f5a2bdf64d&libraries=services"></script>
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root{
-      --text:#eef1f8;
-      --muted:rgba(238,241,248,.65);
+      --bg:#0b0d12;
+      --panel:#0f1118;
+      --panel2:#101321;
+      --line:#2a2f3a;
 
-      --glass:rgba(18,20,28,.74);
-      --glass2:rgba(18,20,28,.86);
-      --line:rgba(255,255,255,.12);
+      --text:#e9ecf4;
+      --muted:#aeb4c6;
 
-      --shadow:0 18px 52px rgba(0,0,0,.38);
+      --yellow:#ffd54a;
+      --blue:#6aa6ff;
+      --red:#ff4d6d;
 
-      --accent:#6aa6ff;
-      --hot:#ff4d6d;
-      --mid:#a06bff;
-      --low:#8aa0bd;
-
+      --shadow:0 14px 40px rgba(0,0,0,.55);
+      --r:18px;
       --pill:999px;
     }
+
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif;color:var(--text)}
     #map{position:fixed;inset:0}
-
-    /* Bottom place bar (always visible) */
-    .placebar{
-      position:fixed;
-      left:50%; transform:translateX(-50%);
-      bottom:76px; /* sits above dock */
-      width:min(640px, calc(100vw - 24px));
-      display:flex; align-items:stretch; gap:10px;
-      padding:10px 12px;
-      background:var(--glass);
-      border:1px solid var(--line);
-      border-radius:22px;
-      box-shadow:var(--shadow);
-      backdrop-filter:blur(16px);
-      z-index:1100;
-    }
-    .navBtn{
-      width:44px; min-width:44px;
-      border-radius:18px;
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.12);
-      color:var(--text);
-      cursor:pointer;
-      user-select:none;
-      display:flex; align-items:center; justify-content:center;
-      font-size:16px;
-    }
-    .navBtn:disabled{opacity:.5; cursor:not-allowed}
-    .pbMain{
-      flex:1; min-width:0;
-      display:flex; flex-direction:column; gap:6px;
-      padding:2px 2px;
-    }
-    .pbTitle{
-      font-weight:950; font-size:13.5px; line-height:1.2;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .pbAddr{
-      color:var(--muted); font-size:12px; line-height:1.35;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .pbMeta{
-      display:flex; gap:10px; flex-wrap:wrap;
-      color:rgba(238,241,248,.55);
-      font-size:12px;
-      line-height:1.2;
-    }
-    .pbActions{
-      display:flex; gap:8px; align-items:center;
-      margin-top:2px;
-    }
 
     /* Dock */
     .dock{
       position:fixed;
       left:50%; transform:translateX(-50%);
-      bottom:14px;
-      width:min(640px, calc(100vw - 24px));
-      display:flex; gap:10px; align-items:center;
-      padding:10px 12px;
-      background:var(--glass);
+      bottom:12px;
+      width:min(620px, calc(100vw - 20px));
+      display:flex; gap:8px; align-items:center;
+      padding:8px 10px;
+      background:var(--panel);
       border:1px solid var(--line);
-      border-radius:22px;
+      border-radius:18px;
       box-shadow:var(--shadow);
-      backdrop-filter:blur(16px);
       z-index:1000;
     }
     .search{
       flex:1;
       display:flex; gap:8px; align-items:center;
-      padding:10px 12px;
+      padding:8px 10px;
       border-radius:var(--pill);
       border:1px solid var(--line);
-      background:rgba(0,0,0,.10);
-      min-width:120px;
+      background:#0d0f16;
+      min-width:140px;
     }
     .search input{
       width:100%; border:0; outline:0; background:transparent;
-      color:var(--text); font-size:14px;
+      color:var(--text); font-size:13px;
     }
-    .search input::placeholder{color:rgba(238,241,248,.42)}
+    .search input::placeholder{color:rgba(233,236,244,.35)}
+
     button{
       border:1px solid var(--line);
-      background:rgba(0,0,0,.12);
+      background:#121526;
       color:var(--text);
-      padding:10px 12px;
+      padding:8px 10px;
       border-radius:var(--pill);
       cursor:pointer;
       white-space:nowrap;
       user-select:none;
+      font-size:13px;
     }
     button.primary{
-      background:rgba(106,166,255,.16);
-      border-color:rgba(106,166,255,.45);
+      border-color:rgba(255,213,74,.55);
+      color:var(--yellow);
     }
     button.danger{
-      background:rgba(255,77,109,.12);
-      border-color:rgba(255,77,109,.35);
+      border-color:rgba(255,77,109,.45);
+      color:#ffd2da;
     }
     button:disabled{opacity:.55; cursor:not-allowed}
-    .dock .right{display:flex; gap:8px; align-items:center}
-    @media (max-width:520px){
-      .dock{gap:8px}
-      button{padding:10px 10px}
-      .placebar{gap:8px}
-      .navBtn{width:40px; min-width:40px}
+
+    .right{display:flex; gap:8px; align-items:center}
+
+    /* Compact draggable Place Bar (remote controller style) */
+    .placebar{
+      position:fixed;
+      left:50%; transform:translateX(-50%);
+      bottom:64px; /* above dock, but draggable */
+      width:min(560px, calc(100vw - 20px));
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      z-index:1100;
+    }
+    .pbDrag{
+      width:28px; min-width:28px; height:30px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#0d0f16;
+      display:flex; align-items:center; justify-content:center;
+      cursor:grab;
+      color:rgba(233,236,244,.65);
+      user-select:none;
+      font-size:14px;
+      letter-spacing:-1px;
+    }
+    .pbDrag:active{cursor:grabbing}
+    .navBtn{
+      width:38px; min-width:38px; height:30px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:#0d0f16;
+      color:var(--text);
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      user-select:none;
+      font-size:14px;
+      padding:0;
+    }
+    .pbMid{
+      flex:1; min-width:0;
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .pbName{
+      font-weight:950;
+      font-size:13px;
+      color:var(--yellow);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      line-height:1.1;
+    }
+    .pbSub{
+      font-size:12px;
+      color:rgba(233,236,244,.60);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      line-height:1.1;
+    }
+    .pbBtns{
+      display:flex; gap:6px; align-items:center;
+    }
+    .pbBtns button{
+      padding:7px 9px;
+      border-radius:14px;
+      height:30px;
+      font-size:12.5px;
     }
 
-    /* Floating windows */
+    /* Floating windows (solid black, no blur/opacity) */
     .float{
       position:fixed;
-      background:var(--glass2);
+      background:var(--panel2);
       border:1px solid var(--line);
-      border-radius:22px;
+      border-radius:18px;
       box-shadow:var(--shadow);
-      backdrop-filter:blur(18px);
       z-index:1600;
       overflow:hidden;
-      pointer-events:auto;
+      display:none;
     }
     .floatHeader{
-      display:flex; gap:10px; align-items:center;
-      padding:12px 14px;
+      display:flex; gap:8px; align-items:center;
+      padding:10px 12px;
       border-bottom:1px solid var(--line);
       user-select:none;
+      background:#0f1220;
     }
+    .dragBar{cursor:grab;}
+    .dragBar:active{cursor:grabbing;}
     .floatHeader h3{
-      margin:0; font-size:14px; line-height:1.25;
-      font-weight:950; flex:1; min-width:0;
+      margin:0;
+      font-size:13px;
+      line-height:1.2;
+      font-weight:950;
+      flex:1; min-width:0;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      color:var(--yellow);
     }
-    .floatBody{padding:14px; max-height:72vh; overflow:auto}
-    .hint{font-size:12px; color:var(--muted); line-height:1.45}
-    .sub{margin-top:6px; color:var(--muted); font-size:12px; line-height:1.35; word-break:break-word}
+    .floatBody{
+      padding:12px;
+      max-height:68vh;
+      overflow:auto;
+    }
+    .hint{font-size:12px; color:rgba(233,236,244,.58); line-height:1.45}
 
     .cardItem{
-      background:rgba(0,0,0,.12);
+      background:#0d0f16;
       border:1px solid var(--line);
-      border-radius:16px;
-      padding:12px;
+      border-radius:14px;
+      padding:10px;
       margin-bottom:10px;
     }
     .visitTop{display:flex; justify-content:space-between; align-items:center; gap:10px}
     .badge{
-      font-size:12px; padding:6px 10px;
+      font-size:12px; padding:5px 9px;
       border-radius:var(--pill);
       border:1px solid var(--line);
-      background:rgba(0,0,0,.10);
+      background:#0b0d12;
       white-space:nowrap;
+      color:rgba(233,236,244,.80);
     }
+    .sub{margin-top:6px; color:rgba(233,236,244,.60); font-size:12px; line-height:1.35; word-break:break-word}
     .visitContent{margin-top:10px; white-space:pre-wrap; font-size:13px; line-height:1.55}
-    .miniActions{display:flex; gap:8px; margin-top:10px; justify-content:flex-end}
-    .miniActions button{padding:8px 10px}
 
-    label{display:block; font-size:12px; color:rgba(238,241,248,.70); margin:0 0 6px}
+    .miniActions{display:flex; gap:8px; margin-top:10px; justify-content:flex-end}
+    .miniActions button{padding:7px 9px; height:30px}
+
+    label{display:block; font-size:12px; color:rgba(233,236,244,.72); margin:0 0 6px}
     input, textarea{
       width:100%;
       border:1px solid var(--line);
-      background:rgba(0,0,0,.14);
+      background:#0b0d12;
       color:var(--text);
-      border-radius:14px;
-      padding:10px;
+      border-radius:12px;
+      padding:9px 10px;
       outline:none;
       font-size:13px;
     }
-    textarea{min-height:180px; resize:vertical; line-height:1.55}
-    .grid{display:grid; grid-template-columns:1fr 140px; gap:10px}
+    textarea{min-height:140px; resize:vertical; line-height:1.55}
+    .grid{display:grid; grid-template-columns:1fr 130px; gap:10px}
     .row{display:flex; gap:8px; justify-content:flex-end; margin-top:10px}
 
+    /* Modals */
     .overlay{
       position:fixed; inset:0;
-      background:rgba(0,0,0,.35);
+      background:rgba(0,0,0,.55);
       display:none; align-items:center; justify-content:center;
-      padding:16px;
+      padding:14px;
       z-index:2000;
     }
     .overlay.open{display:flex}
     .modal{
-      width:min(760px,96vw);
-      background:var(--glass2);
+      width:min(720px,96vw);
+      background:var(--panel2);
       border:1px solid var(--line);
-      border-radius:22px;
+      border-radius:18px;
       box-shadow:var(--shadow);
-      backdrop-filter:blur(18px);
       overflow:hidden;
-      pointer-events:auto;
     }
     .modalHeader{
-      padding:14px 16px;
+      padding:12px 14px;
       border-bottom:1px solid var(--line);
       display:flex; align-items:center; gap:10px;
+      background:#0f1220;
     }
-    .modalHeader h3{margin:0; font-size:15px; flex:1; font-weight:950}
-    .modalBody{padding:16px}
+    .modalHeader h3{margin:0; font-size:13.5px; flex:1; font-weight:950; color:var(--yellow)}
+    .modalBody{padding:14px}
+
     .results{margin-top:10px; display:flex; flex-direction:column; gap:8px}
     .resultItem{
-      padding:12px;
+      padding:10px;
       border:1px solid var(--line);
-      border-radius:16px;
-      background:rgba(0,0,0,.12);
+      border-radius:14px;
+      background:#0d0f16;
       cursor:pointer;
       pointer-events:auto;
     }
-    .resultItem:hover{border-color:rgba(106,166,255,.55)}
-    .resultItem .t{font-weight:950; font-size:13px; margin-bottom:4px}
-    .resultItem .s{font-size:12px; color:var(--muted); line-height:1.35}
+    .resultItem:hover{border-color:rgba(255,213,74,.50)}
+    .resultItem .t{font-weight:950; font-size:13px; margin-bottom:4px; color:var(--yellow)}
+    .resultItem .s{font-size:12px; color:rgba(233,236,244,.60); line-height:1.35}
 
+    /* Toast */
     .toast{
       position:fixed;
       left:50%; transform:translateX(-50%);
-      bottom:146px; /* above placebar + dock */
-      background:rgba(18,20,28,.92);
+      bottom:126px;
+      background:#0b0d12;
       border:1px solid var(--line);
       border-radius:var(--pill);
-      padding:10px 14px;
+      padding:9px 12px;
       box-shadow:var(--shadow);
       display:none; gap:10px; align-items:center;
       z-index:3000;
-      backdrop-filter:blur(16px);
     }
     .toast.show{display:flex}
-    .dot{width:8px; height:8px; border-radius:50%; background:var(--accent)}
+    .dot{width:8px; height:8px; border-radius:50%; background:var(--yellow)}
 
-    .dragBar{ cursor:grab; }
-    .dragBar:active{ cursor:grabbing; }
-
-    .pinBtn{
-      padding:8px 10px;
-      border-radius:14px;
-      display:inline-flex; gap:8px; align-items:center;
-    }
-    .pinOn{
-      background:rgba(255,255,255,.10);
-      border-color:rgba(255,255,255,.22);
+    @media (max-width:520px){
+      .dock{gap:6px}
+      .placebar{gap:6px}
+      button{padding:8px 9px}
+      .navBtn{width:36px; min-width:36px}
+      .pbDrag{width:26px; min-width:26px}
+      .grid{grid-template-columns:1fr 120px}
     }
   </style>
 </head>
@@ -272,25 +293,26 @@
 <body>
   <div id="map"></div>
 
-  <!-- ALWAYS visible place bar (fixed above the dock) -->
+  <!-- Draggable Place Bar -->
   <div id="placeBar" class="placebar">
+    <div id="pbDrag" class="pbDrag" title="드래그">⋮⋮</div>
     <button id="prevPlaceBtn" class="navBtn" title="이전">◀</button>
 
-    <div class="pbMain">
-      <div class="pbTitle" id="pbName">가게 로딩 중…</div>
-      <div class="pbAddr" id="pbAddr">잠시만</div>
-      <div class="pbMeta" id="pbMeta"></div>
+    <div class="pbMid">
+      <div id="pbName" class="pbName">가게 선택</div>
+      <div id="pbSub" class="pbSub">마커를 누르거나 ▶로 랜덤 이동</div>
+    </div>
 
-      <div class="pbActions">
-        <button id="pbVisitsBtn">기록</button>
-        <button id="pbWriteBtn" class="primary">작성</button>
-        <button id="pbManageBtn" style="display:none">관리</button>
-      </div>
+    <div class="pbBtns">
+      <button id="pbVisitsBtn" disabled>기록</button>
+      <button id="pbWriteBtn" class="primary" disabled>작성</button>
+      <button id="pbManageBtn" style="display:none">관리</button>
     </div>
 
     <button id="nextPlaceBtn" class="navBtn" title="랜덤 다음">▶</button>
   </div>
 
+  <!-- Bottom Dock -->
   <div class="dock">
     <div class="search" title="가게/주소 검색 (Enter)">
       <span style="opacity:.75">🔎</span>
@@ -299,38 +321,34 @@
 
     <div class="right">
       <button id="addBtn" class="primary">추가</button>
-
       <button id="loginOpenBtn">로그인</button>
       <button id="signupOpenBtn">회원가입</button>
-
       <button id="accountOpenBtn" style="display:none">계정</button>
     </div>
   </div>
 
   <!-- Visits window -->
-  <aside id="visitsWin" class="float" style="display:none; width:min(620px,94vw); right:14px; top:14px;">
+  <aside id="visitsWin" class="float" style="width:min(420px,92vw);">
     <div class="floatHeader dragBar" id="visitsDragBar">
       <h3 id="visitsTitle">방문 기록</h3>
-      <button id="visitsPinBtn" class="pinBtn" title="핀 고정">📌</button>
       <button id="closeVisitsBtn">닫기</button>
     </div>
     <div class="floatBody">
       <div class="hint" id="visitsHint">하단 바에서 “기록”을 누르면 열려.</div>
-      <div style="margin-top:12px" id="visits"></div>
+      <div style="margin-top:10px" id="visits"></div>
     </div>
   </aside>
 
   <!-- Editor window -->
-  <aside id="editorWin" class="float" style="display:none; width:min(760px,94vw); left:14px; top:14px;">
+  <aside id="editorWin" class="float" style="width:min(460px,92vw);">
     <div class="floatHeader dragBar" id="editorDragBar">
       <h3 id="editorTitle">방문기 작성</h3>
-      <button id="editorPinBtn" class="pinBtn" title="핀 고정">📌</button>
       <button id="closeEditorBtn">닫기</button>
     </div>
     <div class="floatBody">
-      <div class="hint" id="editorHint">핀 OFF면 다른 가게 “작성” 버튼으로 이 창을 재사용할 수 있어.</div>
+      <div class="hint" id="editorHint">가게 선택 후 “작성”을 눌러.</div>
 
-      <div style="margin-top:12px" class="grid">
+      <div style="margin-top:10px" class="grid">
         <div>
           <label>방문 날짜</label>
           <input id="visitDate" type="date" />
@@ -351,14 +369,14 @@
         <button id="saveVisitBtn" class="primary">저장</button>
       </div>
 
-      <div class="hint" style="margin-top:10px">
-        작성자 표시는 닉네임. (닉네임 없으면 작성 불가)
+      <div class="hint" style="margin-top:8px">
+        닉네임이 없으면 작성 불가.
       </div>
     </div>
   </aside>
 
   <!-- Place manage window -->
-  <aside id="placeWin" class="float" style="display:none; width:min(640px,94vw); left:14px; top:90px;">
+  <aside id="placeWin" class="float" style="width:min(420px,92vw);">
     <div class="floatHeader dragBar" id="placeDragBar">
       <h3 id="placeTitle">가게 관리</h3>
       <button id="closePlaceBtn">닫기</button>
@@ -366,14 +384,14 @@
     <div class="floatBody">
       <div class="hint" id="placeHint">가게 수정/삭제는 “추가한 사람”만 가능.</div>
 
-      <div class="cardItem" style="margin-top:12px">
+      <div class="cardItem" style="margin-top:10px">
         <label>가게 이름</label>
         <input id="editPlaceName" />
         <label style="margin-top:10px">주소</label>
         <input id="editPlaceAddr" />
 
         <div class="row" style="justify-content:flex-start;margin-top:10px">
-          <button id="placeAddrSearchBtn" class="primary">주소 후보 보기</button>
+          <button id="placeAddrSearchBtn" class="primary">주소 후보</button>
           <span id="placeGeoStatus" class="hint"></span>
         </div>
         <div id="placeResults" class="results"></div>
@@ -382,7 +400,7 @@
           <button id="savePlaceBtn" class="primary">수정 저장</button>
           <button id="deletePlaceBtn" class="danger">가게 삭제</button>
         </div>
-        <div class="hint" style="margin-top:10px">
+        <div class="hint" style="margin-top:8px">
           삭제 시 해당 가게의 방문기록도 함께 삭제돼.
         </div>
       </div>
@@ -409,7 +427,7 @@
         </div>
 
         <div class="row" style="justify-content:flex-start;margin-top:10px">
-          <button id="addrSearchBtn" class="primary">주소 후보 보기</button>
+          <button id="addrSearchBtn" class="primary">주소 후보</button>
           <span id="geoStatus" class="hint"></span>
         </div>
 
@@ -424,7 +442,7 @@
 
   <!-- Login modal -->
   <div id="loginOverlay" class="overlay">
-    <div class="modal" style="width:min(560px,96vw)">
+    <div class="modal" style="width:min(520px,96vw)">
       <div class="modalHeader">
         <h3>로그인</h3>
         <button id="closeLoginBtn">닫기</button>
@@ -438,7 +456,7 @@
           <div class="row">
             <button id="loginBtn" class="primary">로그인</button>
           </div>
-          <div class="hint" style="margin-top:10px">에러가 나면 토스트 메시지로 이유가 나와.</div>
+          <div class="hint" style="margin-top:8px">에러는 토스트로 표시돼.</div>
         </div>
       </div>
     </div>
@@ -446,7 +464,7 @@
 
   <!-- Signup modal -->
   <div id="signupOverlay" class="overlay">
-    <div class="modal" style="width:min(600px,96vw)">
+    <div class="modal" style="width:min(560px,96vw)">
       <div class="modalHeader">
         <h3>회원가입</h3>
         <button id="closeSignupBtn">닫기</button>
@@ -462,7 +480,7 @@
           <div class="row">
             <button id="signupBtn" class="primary">회원가입</button>
           </div>
-          <div class="hint" style="margin-top:10px">이메일 인증 설정에 따라 가입 후 메일 확인이 필요할 수 있어.</div>
+          <div class="hint" style="margin-top:8px">이메일 인증 설정에 따라 가입 후 메일 확인이 필요할 수 있어.</div>
         </div>
       </div>
     </div>
@@ -470,7 +488,7 @@
 
   <!-- Account modal -->
   <div id="accountOverlay" class="overlay">
-    <div class="modal" style="width:min(700px,96vw)">
+    <div class="modal" style="width:min(640px,96vw)">
       <div class="modalHeader">
         <h3>계정</h3>
         <button id="closeAccountBtn">닫기</button>
@@ -478,7 +496,7 @@
       <div class="modalBody">
         <div class="cardItem">
           <div class="hint">현재 로그인</div>
-          <div id="accountLine" style="font-weight:950;margin-top:6px"></div>
+          <div id="accountLine" style="font-weight:950;margin-top:6px;color:var(--yellow)"></div>
 
           <div style="margin-top:12px">
             <label>닉네임</label>
@@ -495,11 +513,11 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
               <div class="cardItem" style="margin:0">
                 <div class="hint">내가 추가한 가게</div>
-                <div style="font-size:20px;font-weight:950;margin-top:6px" id="myPlacesCount">-</div>
+                <div style="font-size:18px;font-weight:950;margin-top:6px;color:var(--yellow)" id="myPlacesCount">-</div>
               </div>
               <div class="cardItem" style="margin:0">
                 <div class="hint">내가 남긴 방문기</div>
-                <div style="font-size:20px;font-weight:950;margin-top:6px" id="myVisitsCount">-</div>
+                <div style="font-size:18px;font-weight:950;margin-top:6px;color:var(--yellow)" id="myVisitsCount">-</div>
               </div>
             </div>
           </div>
@@ -528,10 +546,11 @@ function toast(msg){
   $('toastText').textContent = msg;
   $('toast').classList.add('show');
   clearTimeout(toast._tm);
-  toast._tm = setTimeout(()=> $('toast').classList.remove('show'), 2600);
+  toast._tm = setTimeout(()=> $('toast').classList.remove('show'), 2400);
 }
 function open(el){ el.classList.add('open'); }
 function close(el){ el.classList.remove('open'); }
+
 function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
 
 const state = {
@@ -546,17 +565,12 @@ const state = {
   geocoder: null,
 
   places: [],
-  markers: new Map(),        // placeId -> Marker
-  visitCounts: new Map(),    // placeId -> count
-  avgRatings: new Map(),     // placeId -> avg rating (null if none)
+  markers: new Map(),
+  visitCounts: new Map(),
+  avgRatings: new Map(),
 
   selectedPlace: null,
-  history: [],               // previous selections (for ◀)
-
-  // windows
-  visits: { pin:false, placeId:null },
-  editor: { pin:false, placeId:null },
-  place:  { placeId:null },
+  history: [],
 
   editingVisitId: null,
 
@@ -564,7 +578,17 @@ const state = {
   zTop: 1600,
 
   addBusy: false,
-  placeBusy: false
+  placeBusy: false,
+
+  // floating positions
+  pos: {
+    placeBar: null,
+    visitsWin: null,
+    editorWin: null,
+    placeWin: null
+  },
+  placeBarAnchored: true,
+  cascadeN: 0
 };
 
 function configured(){
@@ -577,7 +601,6 @@ function requireSb(){
   }
   return true;
 }
-
 function getMyNickname(){
   const a = (state.myProfile?.nickname || '').trim();
   if(a) return a;
@@ -614,13 +637,8 @@ function bringToFront(el){
   el.style.zIndex = String(state.zTop);
 }
 
-function setPinUI(btn, isOn){
-  btn.classList.toggle('pinOn', !!isOn);
-  btn.textContent = isOn ? '📌 ON' : '📌';
-}
-
-/* ===== draggable windows ===== */
-function makeDraggable(winEl, barEl){
+/* ===== draggable ===== */
+function makeDraggable(winEl, handleEl, key, { anchored=false } = {}){
   let dragging = false;
   let startX=0, startY=0, startLeft=0, startTop=0;
 
@@ -630,14 +648,17 @@ function makeDraggable(winEl, barEl){
 
     dragging = true;
     bringToFront(winEl);
-    barEl.setPointerCapture(e.pointerId);
-
-    startX = e.clientX;
-    startY = e.clientY;
+    handleEl.setPointerCapture(e.pointerId);
 
     const r = winEl.getBoundingClientRect();
     startLeft = r.left;
     startTop  = r.top;
+    startX = e.clientX;
+    startY = e.clientY;
+
+    if(anchored){
+      state.placeBarAnchored = false;
+    }
   };
 
   const onMove = (e)=>{
@@ -646,24 +667,97 @@ function makeDraggable(winEl, barEl){
     const dy = e.clientY - startY;
 
     const r = winEl.getBoundingClientRect();
-    const newLeft = clamp(startLeft + dx, 8, window.innerWidth - r.width - 8);
-    const newTop  = clamp(startTop + dy, 8, window.innerHeight - r.height - 8);
+    const newLeft = clamp(startLeft + dx, 6, window.innerWidth - r.width - 6);
+    const newTop  = clamp(startTop + dy, 6, window.innerHeight - r.height - 6);
 
-    winEl.style.left = newLeft + 'px';
-    winEl.style.top  = newTop + 'px';
-    winEl.style.right = 'auto';
+    setElPos(winEl, newLeft, newTop);
   };
 
   const onUp = (e)=>{
     if(!dragging) return;
     dragging = false;
-    try{ barEl.releasePointerCapture(e.pointerId); } catch {}
+    try{ handleEl.releasePointerCapture(e.pointerId); }catch{}
+    persistPos(winEl, key);
   };
 
-  barEl.addEventListener('pointerdown', onDown);
-  barEl.addEventListener('pointermove', onMove);
-  barEl.addEventListener('pointerup', onUp);
-  barEl.addEventListener('pointercancel', onUp);
+  handleEl.addEventListener('pointerdown', onDown);
+  handleEl.addEventListener('pointermove', onMove);
+  handleEl.addEventListener('pointerup', onUp);
+  handleEl.addEventListener('pointercancel', onUp);
+}
+
+function setElPos(el, x, y){
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  el.style.right = 'auto';
+  el.style.bottom = 'auto';
+  // placebar은 transform이 있으니 끄기
+  if(el.id === 'placeBar'){
+    el.style.transform = 'none';
+  }
+}
+
+function persistPos(el, key){
+  const r = el.getBoundingClientRect();
+  state.pos[key] = { x: r.left, y: r.top };
+}
+
+function ensureOnscreen(el, key){
+  const r = el.getBoundingClientRect();
+  let x = r.left, y = r.top;
+
+  const maxX = window.innerWidth - r.width - 6;
+  const maxY = window.innerHeight - r.height - 6;
+
+  x = clamp(x, 6, Math.max(6, maxX));
+  y = clamp(y, 6, Math.max(6, maxY));
+
+  setElPos(el, x, y);
+  state.pos[key] = { x, y };
+}
+
+function anchorPlaceBarIfNeeded(){
+  const pb = $('placeBar');
+  if(!state.placeBarAnchored) return;
+
+  // default: bottom center above dock
+  pb.style.left = '50%';
+  pb.style.bottom = '64px';
+  pb.style.top = 'auto';
+  pb.style.right = 'auto';
+  pb.style.transform = 'translateX(-50%)';
+  state.pos.placeBar = null;
+}
+
+function placeNearPlaceBar(winEl, key){
+  const pb = $('placeBar');
+  const pbRect = pb.getBoundingClientRect();
+
+  state.cascadeN = (state.cascadeN + 1) % 7;
+  const off = 12 * state.cascadeN; // 살짝 틀어지는 정도
+
+  // 기본은 placebar 위쪽으로, 살짝 겹치게(오버랩 허용)
+  const x = pbRect.left + 10 + off;
+  const y = Math.max(8, pbRect.top - 240 + off);
+
+  setElPos(winEl, x, y);
+  persistPos(winEl, key);
+  ensureOnscreen(winEl, key);
+}
+
+function showFloat(winEl, key){
+  winEl.style.display = 'block';
+  bringToFront(winEl);
+
+  // 1) 저장된 위치 있으면 그걸 우선 사용
+  if(state.pos[key]){
+    setElPos(winEl, state.pos[key].x, state.pos[key].y);
+    ensureOnscreen(winEl, key);
+    return;
+  }
+
+  // 2) 없으면 placebar 근처에 cascade로 배치
+  placeNearPlaceBar(winEl, key);
 }
 
 /* ===== Kakao Map ===== */
@@ -677,22 +771,17 @@ function initMap(){
   state.geocoder = new kakao.maps.services.Geocoder();
 }
 
-/* ===== Place Bar (fixed UI above dock) ===== */
+/* ===== Place Bar ===== */
 function updatePlaceBar(){
   const has = !!state.selectedPlace;
-  const pbName = $('pbName');
-  const pbAddr = $('pbAddr');
-  const pbMeta = $('pbMeta');
-
   $('pbVisitsBtn').disabled = !has;
   $('pbWriteBtn').disabled  = !has;
   $('prevPlaceBtn').disabled = state.history.length === 0;
   $('nextPlaceBtn').disabled = state.places.length <= 1;
 
   if(!has){
-    pbName.textContent = '가게 선택';
-    pbAddr.textContent = '마커를 누르거나 ▶로 랜덤 이동';
-    pbMeta.innerHTML = '';
+    $('pbName').textContent = '가게 선택';
+    $('pbSub').textContent = '마커를 누르거나 ▶로 랜덤 이동';
     $('pbManageBtn').style.display = 'none';
     return;
   }
@@ -701,17 +790,11 @@ function updatePlaceBar(){
   const author = displayName(p.user_id);
   const cnt = state.visitCounts.get(p.id) || 0;
   const avg = state.avgRatings.get(p.id);
-  const avgText = (avg == null) ? '평점 없음' : `평균 ${avg.toFixed(1)}`;
-  const hot = (avg != null && avg >= 4.0);
+  const avgText = (avg == null) ? '평점 없음' : `⭐ ${avg.toFixed(1)}`;
+  const meta = `📝 ${cnt} · ${avgText} · +${author}`;
 
-  pbName.textContent = p.name;
-  pbAddr.textContent = p.address;
-
-  pbMeta.innerHTML = `
-    <span>추가자: ${esc(author)}</span>
-    <span>방문기: ${cnt}개</span>
-    <span>${hot ? '❤️ ' : ''}${esc(avgText)}</span>
-  `;
+  $('pbName').textContent = p.name;
+  $('pbSub').textContent  = meta;
 
   const isMine = !!(state.user && p.user_id === state.user.id);
   $('pbManageBtn').style.display = isMine ? 'inline-flex' : 'none';
@@ -720,8 +803,7 @@ function updatePlaceBar(){
 function panToSelectedPlace(){
   if(!state.map || !state.selectedPlace) return;
   const pos = new kakao.maps.LatLng(state.selectedPlace.lat, state.selectedPlace.lng);
-  // Smooth move (no instant snap)
-  state.map.panTo(pos);
+  state.map.panTo(pos); // smooth
 }
 
 async function setSelectedPlace(placeId, { pushHistory=false, pan=true } = {}){
@@ -737,17 +819,14 @@ async function setSelectedPlace(placeId, { pushHistory=false, pan=true } = {}){
 
   updatePlaceBar();
   refreshMarkerImages();
-
   if(pan) panToSelectedPlace();
 }
 
 async function gotoRandomNext(){
   if(state.places.length <= 1) return;
-
   const cur = state.selectedPlace?.id;
   const candidates = state.places.filter(p => p.id !== cur);
   if(candidates.length === 0) return;
-
   const pick = candidates[Math.floor(Math.random() * candidates.length)];
   await setSelectedPlace(pick.id, { pushHistory:true, pan:true });
 }
@@ -758,7 +837,7 @@ async function gotoPrev(){
   await setSelectedPlace(prevId, { pushHistory:false, pan:true });
 }
 
-/* ===== Heart marker SVG (NO shadow, inverted ring/bg) ===== */
+/* ===== Heart marker (no shadow) ===== */
 function svgHeartMarker({ size, heartFill, heartStroke, heartFillOn, selected }){
   const S = size;
   const cx = S/2, cy = S/2;
@@ -772,11 +851,9 @@ function svgHeartMarker({ size, heartFill, heartStroke, heartFillOn, selected })
     Z
   `.trim();
 
-  // inverted: light body, dark border
-  const circleFill = 'rgba(255,255,255,.93)';
-  const circleStroke = 'rgba(18,20,28,.92)';
-
-  // selection: ONLY “fill heart” (no size bump)
+  // inverted: light disk + dark ring
+  const circleFill = '#f4f5f7';
+  const circleStroke = '#0b0d12';
   const fill = selected ? heartFillOn : heartFill;
 
   const svg = `
@@ -787,59 +864,48 @@ function svgHeartMarker({ size, heartFill, heartStroke, heartFillOn, selected })
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
 }
 
-function countBucket(c){
-  if(c<=0) return '0';
-  if(c<=2) return '1';
-  if(c<=5) return '2';
-  return '3';
-}
-
 function markerImageForPlace(placeId){
   const count = state.visitCounts.get(placeId) || 0;
   const avg = state.avgRatings.get(placeId);
   const selected = state.selectedPlace?.id === placeId;
 
-  // size depends ONLY on visit count (NOT selection)
-  let size = 24;
-  if(count === 0) size = 24;
-  else if(count <= 2) size = 30;
-  else if(count <= 5) size = 36;
-  else size = 44;
-
-  // heart color:
-  // - avg >= 4.0 => RED heart (requested)
-  // - else color by visit count bucket
-  let stroke = 'rgba(18,20,28,.92)';
-  let fillOff = 'none';
-  let fillOn  = 'rgba(18,20,28,.92)'; // selection fill (for empty hearts)
+  // size only by visit count (selection does NOT change size)
+  let size = 22;
+  if(count === 0) size = 22;
+  else if(count <= 2) size = 28;
+  else if(count <= 5) size = 34;
+  else size = 40;
 
   const hot = (avg != null && avg >= 4.0);
+  let stroke = '#0b0d12';
+  let fillOff = 'none';
+  let fillOn  = '#0b0d12';
+
   if(hot){
-    stroke = 'rgba(255,77,109,.98)';
-    fillOff = 'rgba(255,77,109,.92)';
-    fillOn  = 'rgba(255,77,109,.92)';
+    stroke = '#ff4d6d';
+    fillOff = '#ff4d6d';
+    fillOn  = '#ff4d6d';
   } else {
     if(count === 0){
-      stroke = 'rgba(18,20,28,.82)';
+      stroke = '#0b0d12';
       fillOff = 'none';
-      fillOn  = 'rgba(18,20,28,.90)'; // selected: filled heart
+      fillOn  = '#0b0d12'; // selection: fill
     } else if(count <= 2){
-      stroke = 'rgba(106,166,255,.98)';
-      fillOff = 'rgba(106,166,255,.92)';
-      fillOn  = 'rgba(106,166,255,.92)';
+      stroke = '#6aa6ff';
+      fillOff = '#6aa6ff';
+      fillOn  = '#6aa6ff';
     } else if(count <= 5){
-      stroke = 'rgba(160,107,255,.98)';
-      fillOff = 'rgba(160,107,255,.92)';
-      fillOn  = 'rgba(160,107,255,.92)';
+      stroke = '#a06bff';
+      fillOff = '#a06bff';
+      fillOn  = '#a06bff';
     } else {
-      // 6+ : bigger is the main signal, keep deep tone
-      stroke = 'rgba(18,20,28,.92)';
-      fillOff = 'rgba(18,20,28,.88)';
-      fillOn  = 'rgba(18,20,28,.88)';
+      stroke = '#0b0d12';
+      fillOff = '#0b0d12';
+      fillOn  = '#0b0d12';
     }
   }
 
-  const key = `heart:${countBucket(count)}:${hot?'hot':'n'}:${selected?'sel':'n'}:${size}`;
+  const key = `h:${count}:${hot?'hot':'n'}:${selected?'sel':'n'}:${size}`;
   if(state.markerImageCache.has(key)) return state.markerImageCache.get(key);
 
   const url = svgHeartMarker({ size, heartFill: fillOff, heartStroke: stroke, heartFillOn: fillOn, selected });
@@ -998,7 +1064,6 @@ async function loadPlaces(){
 }
 
 async function loadVisitStats(){
-  // counts + avg ratings in one pass
   const { data, error } = await state.sb
     .from('visits')
     .select('place_id, rating');
@@ -1077,7 +1142,6 @@ function renderMarkers(){
     marker.setMap(state.map);
 
     kakao.maps.event.addListener(marker, 'click', async () => {
-      // click -> update bottom bar selection + smooth pan
       await setSelectedPlace(p.id, { pushHistory:true, pan:true });
     });
 
@@ -1088,18 +1152,17 @@ function renderMarkers(){
 /* ===== Visits / Editor / Manage ===== */
 function isVisitsOpen(){ return $('visitsWin').style.display !== 'none'; }
 function isEditorOpen(){ return $('editorWin').style.display !== 'none'; }
+function isPlaceOpen(){ return $('placeWin').style.display !== 'none'; }
 
 async function openVisitsForSelected(){
   if(!state.selectedPlace){ toast('가게 선택 필요'); return; }
   await openVisitsForPlace(state.selectedPlace.id);
 }
-
 async function openEditorForSelected(){
   if(!requireNicknameOrGuide()) return;
   if(!state.selectedPlace){ toast('가게 선택 필요'); return; }
   await openEditorForPlace(state.selectedPlace.id);
 }
-
 async function openManageForSelected(){
   if(!requireNicknameOrGuide()) return;
   if(!state.selectedPlace){ toast('가게 선택 필요'); return; }
@@ -1110,37 +1173,19 @@ async function openVisitsForPlace(placeId){
   const place = state.places.find(p => p.id === placeId);
   if(!place){ toast('가게를 찾지 못함'); return; }
 
-  if(isVisitsOpen() && state.visits.pin && state.visits.placeId && state.visits.placeId !== placeId){
-    toast('기록 창이 핀 고정됨. 핀 해제 후 다른 가게 기록 열기.');
-    return;
-  }
-
-  state.visits.placeId = placeId;
-
-  const win = $('visitsWin');
-  bringToFront(win);
-  win.style.display = 'block';
-
   $('visitsTitle').textContent = `방문 기록 · ${place.name}`;
-  $('visitsHint').textContent = '수정/삭제는 본인만.';
-
+  $('visitsHint').textContent = '수정/삭제는 본인만 가능.';
+  showFloat($('visitsWin'), 'visitsWin');
   await loadVisitsAndRender(placeId);
 }
 
 async function openEditorForPlace(placeId){
   if(!requireNicknameOrGuide()) return;
 
-  if(isEditorOpen() && state.editor.pin && state.editor.placeId && state.editor.placeId !== placeId){
-    toast('작성 창이 핀 고정됨. 핀 해제 후 다른 가게 작성 가능.');
-    return;
-  }
-
   const place = state.places.find(p => p.id === placeId);
   if(!place){ toast('가게를 찾지 못함'); return; }
 
-  state.editor.placeId = placeId;
   state.editingVisitId = null;
-
   $('editorTitle').textContent = `방문기 작성 · ${place.name}`;
   $('saveVisitBtn').textContent = '저장';
   $('cancelEditBtn').style.display = 'none';
@@ -1148,9 +1193,26 @@ async function openEditorForPlace(placeId){
   $('visitRating').value = '';
   $('visitContent').value = '';
 
-  const win = $('editorWin');
-  bringToFront(win);
-  win.style.display = 'block';
+  showFloat($('editorWin'), 'editorWin');
+}
+
+async function openPlaceManage(placeId){
+  const place = state.places.find(p => p.id === placeId);
+  if(!place){ toast('가게를 찾지 못함'); return; }
+  if(!(state.user && place.user_id === state.user.id)){
+    toast('이 가게는 너가 추가한 게 아니라서 수정/삭제 불가');
+    return;
+  }
+
+  $('placeTitle').textContent = `가게 관리 · ${place.name}`;
+  $('editPlaceName').value = place.name || '';
+  $('editPlaceAddr').value = place.address || '';
+  $('placeGeoStatus').textContent = '';
+  $('placeResults').innerHTML = '';
+  $('placeResults').dataset.pickLat = '';
+  $('placeResults').dataset.pickLng = '';
+
+  showFloat($('placeWin'), 'placeWin');
 }
 
 async function loadVisitsAndRender(placeId){
@@ -1183,15 +1245,15 @@ async function loadVisitsAndRender(placeId){
     div.className = 'cardItem';
     div.innerHTML = `
       <div class="visitTop">
-        <div style="font-weight:950">${esc(v.visited_at)}</div>
+        <div style="font-weight:950;color:var(--yellow)">${esc(v.visited_at)}</div>
         <div class="badge">${v.rating == null ? '평점 없음' : ('평점 ' + esc(v.rating))}</div>
       </div>
-      <div class="sub" style="margin-top:6px">작성자: ${esc(author)}</div>
+      <div class="sub">작성자: ${esc(author)}</div>
       <div class="visitContent">${esc(v.content || '')}</div>
       ${isMine ? `
         <div class="miniActions">
           <button data-act="edit">수정</button>
-          <button data-act="del">삭제</button>
+          <button data-act="del" class="danger">삭제</button>
         </div>
       ` : ''}
     `;
@@ -1200,13 +1262,7 @@ async function loadVisitsAndRender(placeId){
       div.querySelector('[data-act="edit"]').addEventListener('click', async ()=>{
         if(!requireNicknameOrGuide()) return;
 
-        if(isEditorOpen() && state.editor.pin && state.editor.placeId && state.editor.placeId !== v.place_id){
-          toast('작성 창이 핀 고정됨. 핀 해제 후 수정 가능.');
-          return;
-        }
-
         state.editingVisitId = v.id;
-        state.editor.placeId = v.place_id;
 
         const place = state.places.find(p => p.id === v.place_id);
         $('editorTitle').textContent = `방문기 수정 · ${place ? place.name : ''}`;
@@ -1217,9 +1273,7 @@ async function loadVisitsAndRender(placeId){
         $('visitRating').value = (v.rating ?? '');
         $('visitContent').value = v.content || '';
 
-        const win = $('editorWin');
-        bringToFront(win);
-        win.style.display = 'block';
+        showFloat($('editorWin'), 'editorWin');
       });
 
       div.querySelector('[data-act="del"]').addEventListener('click', async ()=>{
@@ -1243,7 +1297,7 @@ async function loadVisitsAndRender(placeId){
 async function saveVisit(){
   if(!requireNicknameOrGuide()) return;
 
-  const placeId = state.editor.placeId;
+  const placeId = state.selectedPlace?.id;
   if(!placeId){ toast('가게 선택 필요'); return; }
 
   const visited_at = $('visitDate').value || todayISO();
@@ -1290,7 +1344,7 @@ async function saveVisit(){
     await recomputePlaceStats(placeId);
     await loadMyStats();
 
-    if(isVisitsOpen() && state.visits.placeId === placeId){
+    if(isVisitsOpen()){
       await loadVisitsAndRender(placeId);
     }
   } finally {
@@ -1298,7 +1352,7 @@ async function saveVisit(){
   }
 }
 
-/* ===== Place edit/delete + duplicate guard ===== */
+/* ===== Duplicate guard + place edit/delete ===== */
 function haversineMeters(lat1,lng1,lat2,lng2){
   const R = 6371000;
   const toRad = (x)=> x*Math.PI/180;
@@ -1321,7 +1375,6 @@ function isSeoulByCoord(lat, lng){
     });
   });
 }
-
 async function findDuplicateByNameAddress(name, address, excludeId=null){
   let q = state.sb.from('places').select('id, lat, lng').eq('name', name).eq('address', address).limit(5);
   if(excludeId) q = q.neq('id', excludeId);
@@ -1379,26 +1432,6 @@ async function createPlace({ name, address, lat, lng }){
     return null;
   }
   return { ...data, existed:false };
-}
-
-async function openPlaceManage(placeId){
-  const place = state.places.find(p => p.id === placeId);
-  if(!place){ toast('가게를 찾지 못함'); return; }
-  if(!(state.user && place.user_id === state.user.id)){
-    toast('이 가게는 너가 추가한 게 아니라서 수정/삭제 불가');
-    return;
-  }
-
-  state.place.placeId = placeId;
-  $('placeTitle').textContent = `가게 관리 · ${place.name}`;
-  $('editPlaceName').value = place.name || '';
-  $('editPlaceAddr').value = place.address || '';
-  $('placeGeoStatus').textContent = '';
-  $('placeResults').innerHTML = '';
-
-  const win = $('placeWin');
-  bringToFront(win);
-  win.style.display = 'block';
 }
 
 async function updatePlace(placeId, { name, address, lat, lng }){
@@ -1462,7 +1495,6 @@ async function deletePlace(placeId){
     toast(delVisits.error.message || '방문기 삭제 실패');
     return;
   }
-
   const delPlace = await state.sb.from('places').delete().eq('id', placeId);
   if(delPlace.error){
     console.error(delPlace.error);
@@ -1484,22 +1516,12 @@ async function deletePlace(placeId){
     refreshMarkerImages();
   }
 
-  if(state.visits.placeId === placeId && !state.visits.pin){
-    $('visitsWin').style.display = 'none';
-    state.visits.placeId = null;
-  }
-  if(state.editor.placeId === placeId && !state.editor.pin){
-    $('editorWin').style.display = 'none';
-    state.editor.placeId = null;
-  }
   $('placeWin').style.display = 'none';
-  state.place.placeId = null;
-
   await loadMyStats();
   toast('가게 삭제됨');
 }
 
-/* ===== Address search (geocoder) ===== */
+/* ===== Address search ===== */
 function setAddBusy(b){
   state.addBusy = b;
   $('addrSearchBtn').disabled = b;
@@ -1552,30 +1574,20 @@ async function searchAddress(q){
 window.addEventListener('DOMContentLoaded', () => {
   $('visitDate').value = todayISO();
 
-  makeDraggable($('visitsWin'), $('visitsDragBar'));
-  makeDraggable($('editorWin'), $('editorDragBar'));
-  makeDraggable($('placeWin'), $('placeDragBar'));
+  // draggable floats
+  makeDraggable($('visitsWin'), $('visitsDragBar'), 'visitsWin');
+  makeDraggable($('editorWin'), $('editorDragBar'), 'editorWin');
+  makeDraggable($('placeWin'), $('placeDragBar'), 'placeWin');
+
+  // draggable placebar (anchored until first drag)
+  makeDraggable($('placeBar'), $('pbDrag'), 'placeBar', { anchored:true });
 
   $('visitsWin').addEventListener('pointerdown', ()=> bringToFront($('visitsWin')));
   $('editorWin').addEventListener('pointerdown', ()=> bringToFront($('editorWin')));
   $('placeWin').addEventListener('pointerdown', ()=> bringToFront($('placeWin')));
+  $('placeBar').addEventListener('pointerdown', ()=> bringToFront($('placeBar')));
 
-  // pins
-  setPinUI($('visitsPinBtn'), state.visits.pin);
-  setPinUI($('editorPinBtn'), state.editor.pin);
-
-  $('visitsPinBtn').addEventListener('click', ()=>{
-    state.visits.pin = !state.visits.pin;
-    setPinUI($('visitsPinBtn'), state.visits.pin);
-    toast(state.visits.pin ? '기록 창 핀 ON' : '기록 창 핀 OFF');
-  });
-  $('editorPinBtn').addEventListener('click', ()=>{
-    state.editor.pin = !state.editor.pin;
-    setPinUI($('editorPinBtn'), state.editor.pin);
-    toast(state.editor.pin ? '작성 창 핀 ON' : '작성 창 핀 OFF');
-  });
-
-  // close
+  // close buttons
   $('closeVisitsBtn').addEventListener('click', (e)=>{ e.stopPropagation(); $('visitsWin').style.display = 'none'; });
   $('closeEditorBtn').addEventListener('click', (e)=>{ e.stopPropagation(); $('editorWin').style.display = 'none'; });
   $('closePlaceBtn').addEventListener('click', (e)=>{ e.stopPropagation(); $('placeWin').style.display = 'none'; });
@@ -1585,8 +1597,6 @@ window.addEventListener('DOMContentLoaded', () => {
     state.editingVisitId = null;
     $('cancelEditBtn').style.display = 'none';
     $('saveVisitBtn').textContent = '저장';
-    const place = state.places.find(p => p.id === state.editor.placeId);
-    $('editorTitle').textContent = `방문기 작성 · ${place ? place.name : ''}`;
     $('visitDate').value = todayISO();
     $('visitRating').value = '';
     $('visitContent').value = '';
@@ -1779,12 +1789,10 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // local update
       state.places.unshift(created);
       state.visitCounts.set(created.id, 0);
       state.avgRatings.set(created.id, null);
 
-      // add marker
       const marker = new kakao.maps.Marker({
         position: new kakao.maps.LatLng(created.lat, created.lng),
         image: markerImageForPlace(created.id)
@@ -1805,8 +1813,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // place manage address search
   $('placeAddrSearchBtn').addEventListener('click', async ()=>{
-    const pid = state.place.placeId;
+    const pid = state.selectedPlace?.id;
     if(!pid) return;
+
     const name = ($('editPlaceName').value || '').trim();
     const q = ($('editPlaceAddr').value || '').trim();
     if(!name){ toast('가게 이름부터'); return; }
@@ -1831,8 +1840,7 @@ window.addEventListener('DOMContentLoaded', () => {
   $('placeResults').addEventListener('click', (e)=>{
     const item = e.target.closest('.resultItem');
     if(!item) return;
-    const addr = (item.dataset.addr || '').trim();
-    $('editPlaceAddr').value = addr;
+    $('editPlaceAddr').value = (item.dataset.addr || '').trim();
     $('placeResults').dataset.pickLat = item.dataset.lat;
     $('placeResults').dataset.pickLng = item.dataset.lng;
     toast('후보 선택됨. 이제 “수정 저장”');
@@ -1840,10 +1848,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   $('savePlaceBtn').addEventListener('click', async ()=>{
     if(!requireNicknameOrGuide()) return;
-    const pid = state.place.placeId;
-    if(!pid) return;
 
-    const place = state.places.find(p => p.id === pid);
+    const place = state.selectedPlace;
     if(!place) return;
 
     const name = ($('editPlaceName').value || '').trim();
@@ -1857,7 +1863,7 @@ window.addEventListener('DOMContentLoaded', () => {
     try{
       const ok = await isSeoulByCoord(lat, lng);
       if(!ok){ toast('서울이 아니면 저장 안 함'); return; }
-      const updated = await updatePlace(pid, { name, address, lat, lng });
+      const updated = await updatePlace(place.id, { name, address, lat, lng });
       if(!updated) return;
 
       $('placeTitle').textContent = `가게 관리 · ${updated.name}`;
@@ -1871,17 +1877,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
   $('deletePlaceBtn').addEventListener('click', async ()=>{
     if(!requireNicknameOrGuide()) return;
-    const pid = state.place.placeId;
-    if(!pid) return;
+    const place = state.selectedPlace;
+    if(!place) return;
     setPlaceBusy(true);
     try{
-      await deletePlace(pid);
+      await deletePlace(place.id);
     } finally {
       setPlaceBusy(false);
     }
   });
 
-  // search (Enter) -> select + smooth pan
+  // search (Enter)
   $('q').addEventListener('keydown', async (e)=>{
     if(e.key !== 'Enter') return;
     const q = ($('q').value || '').trim().toLowerCase();
@@ -1893,6 +1899,21 @@ window.addEventListener('DOMContentLoaded', () => {
     );
     if(!hit){ toast('검색 결과 없음'); return; }
     await setSelectedPlace(hit.id, { pushHistory:true, pan:true });
+  });
+
+  // resize: keep all open floating windows onscreen + (anchored placebar stays near bottom)
+  window.addEventListener('resize', ()=>{
+    anchorPlaceBarIfNeeded();
+
+    const pb = $('placeBar');
+    if(!state.placeBarAnchored){
+      // user dragged it: still keep onscreen
+      ensureOnscreen(pb, 'placeBar');
+    }
+
+    if(isVisitsOpen()) ensureOnscreen($('visitsWin'), 'visitsWin');
+    if(isEditorOpen()) ensureOnscreen($('editorWin'), 'editorWin');
+    if(isPlaceOpen()) ensureOnscreen($('placeWin'), 'placeWin');
   });
 });
 
@@ -1907,7 +1928,7 @@ window.addEventListener('load', async ()=>{
   renderMarkers();
   refreshMarkerImages();
 
-  // 초기부터 place bar에 가게 정보를 보여주기 (랜덤 1개 선택, but pan은 안 함)
+  // initial selection, but no pan
   if(state.places.length > 0){
     const initial = state.places[Math.floor(Math.random() * state.places.length)];
     await setSelectedPlace(initial.id, { pushHistory:false, pan:false });
@@ -1922,6 +1943,9 @@ window.addEventListener('load', async ()=>{
     updateDockUI();
     updatePlaceBar();
   }
+
+  // anchor placebar initially (until user drags)
+  anchorPlaceBarIfNeeded();
 });
 </script>
 </body>
