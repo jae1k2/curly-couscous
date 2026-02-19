@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Seoul Shared Eats</title>
 
-  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=5c2fb05e6765f133c747e1f5a2bdf64d&libraries=services"></script>
+  <!-- Kakao Maps -->
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=5c2fb05e6765f133c747e1f5a2bdf64d
+&libraries=services"></script>
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -18,18 +21,70 @@
       --line:rgba(255,255,255,.12);
 
       --shadow:0 18px 52px rgba(0,0,0,.38);
-      --pill:999px;
 
       --accent:#6aa6ff;
       --hot:#ff4d6d;
       --mid:#a06bff;
       --low:#8aa0bd;
-      --ring:rgba(255,255,255,.85);
+
+      --pill:999px;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif;color:var(--text)}
     #map{position:fixed;inset:0}
 
+    /* Bottom place bar (always visible) */
+    .placebar{
+      position:fixed;
+      left:50%; transform:translateX(-50%);
+      bottom:76px; /* sits above dock */
+      width:min(640px, calc(100vw - 24px));
+      display:flex; align-items:stretch; gap:10px;
+      padding:10px 12px;
+      background:var(--glass);
+      border:1px solid var(--line);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(16px);
+      z-index:1100;
+    }
+    .navBtn{
+      width:44px; min-width:44px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.12);
+      color:var(--text);
+      cursor:pointer;
+      user-select:none;
+      display:flex; align-items:center; justify-content:center;
+      font-size:16px;
+    }
+    .navBtn:disabled{opacity:.5; cursor:not-allowed}
+    .pbMain{
+      flex:1; min-width:0;
+      display:flex; flex-direction:column; gap:6px;
+      padding:2px 2px;
+    }
+    .pbTitle{
+      font-weight:950; font-size:13.5px; line-height:1.2;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .pbAddr{
+      color:var(--muted); font-size:12px; line-height:1.35;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .pbMeta{
+      display:flex; gap:10px; flex-wrap:wrap;
+      color:rgba(238,241,248,.55);
+      font-size:12px;
+      line-height:1.2;
+    }
+    .pbActions{
+      display:flex; gap:8px; align-items:center;
+      margin-top:2px;
+    }
+
+    /* Dock */
     .dock{
       position:fixed;
       left:50%; transform:translateX(-50%);
@@ -81,8 +136,11 @@
     @media (max-width:520px){
       .dock{gap:8px}
       button{padding:10px 10px}
+      .placebar{gap:8px}
+      .navBtn{width:40px; min-width:40px}
     }
 
+    /* Floating windows */
     .float{
       position:fixed;
       background:var(--glass2);
@@ -183,7 +241,7 @@
     .toast{
       position:fixed;
       left:50%; transform:translateX(-50%);
-      bottom:82px;
+      bottom:146px; /* above placebar + dock */
       background:rgba(18,20,28,.92);
       border:1px solid var(--line);
       border-radius:var(--pill);
@@ -195,26 +253,6 @@
     }
     .toast.show{display:flex}
     .dot{width:8px; height:8px; border-radius:50%; background:var(--accent)}
-
-    /* Kakao place popover */
-    .kpop{
-      width:280px;
-      background:rgba(18,20,28,.92);
-      border:1px solid var(--line);
-      border-radius:18px;
-      box-shadow:var(--shadow);
-      backdrop-filter:blur(18px);
-      overflow:hidden;
-      pointer-events:auto;
-    }
-    .kpopHead{padding:12px 12px 10px;border-bottom:1px solid var(--line)}
-    .kpopTitle{font-weight:950;font-size:13px;line-height:1.2}
-    .kpopAddr{margin-top:6px;color:var(--muted);font-size:12px;line-height:1.35}
-    .kpopMeta{margin-top:6px;color:rgba(238,241,248,.52);font-size:12px}
-    .kpopBtns{display:flex;gap:8px;padding:10px 12px}
-    .kpopBtns button{flex:1;padding:9px 10px}
-    .kpopAdmin{display:flex; gap:8px; padding:0 12px 12px; justify-content:flex-end}
-    .kpopAdmin button{padding:8px 10px}
 
     .dragBar{ cursor:grab; }
     .dragBar:active{ cursor:grabbing; }
@@ -233,6 +271,25 @@
 
 <body>
   <div id="map"></div>
+
+  <!-- ALWAYS visible place bar (fixed above the dock) -->
+  <div id="placeBar" class="placebar">
+    <button id="prevPlaceBtn" class="navBtn" title="이전">◀</button>
+
+    <div class="pbMain">
+      <div class="pbTitle" id="pbName">가게 로딩 중…</div>
+      <div class="pbAddr" id="pbAddr">잠시만</div>
+      <div class="pbMeta" id="pbMeta"></div>
+
+      <div class="pbActions">
+        <button id="pbVisitsBtn">기록</button>
+        <button id="pbWriteBtn" class="primary">작성</button>
+        <button id="pbManageBtn" style="display:none">관리</button>
+      </div>
+    </div>
+
+    <button id="nextPlaceBtn" class="navBtn" title="랜덤 다음">▶</button>
+  </div>
 
   <div class="dock">
     <div class="search" title="가게/주소 검색 (Enter)">
@@ -258,7 +315,7 @@
       <button id="closeVisitsBtn">닫기</button>
     </div>
     <div class="floatBody">
-      <div class="hint" id="visitsHint">마커 팝오버에서 “기록”을 누르면 열려.</div>
+      <div class="hint" id="visitsHint">하단 바에서 “기록”을 누르면 열려.</div>
       <div style="margin-top:12px" id="visits"></div>
     </div>
   </aside>
@@ -489,9 +546,12 @@ const state = {
   geocoder: null,
 
   places: [],
-  markers: new Map(),     // placeId -> Marker
-  visitCounts: new Map(), // placeId -> count
+  markers: new Map(),        // placeId -> Marker
+  visitCounts: new Map(),    // placeId -> count
+  avgRatings: new Map(),     // placeId -> avg rating (null if none)
+
   selectedPlace: null,
+  history: [],               // previous selections (for ◀)
 
   // windows
   visits: { pin:false, placeId:null },
@@ -499,9 +559,6 @@ const state = {
   place:  { placeId:null },
 
   editingVisitId: null,
-
-  placeOverlay: null,
-  placeOverlayEl: null,
 
   markerImageCache: new Map(),
   zTop: 1600,
@@ -544,6 +601,7 @@ function requireNicknameOrGuide(){
   }
   return true;
 }
+
 function displayName(user_id, fallbackEmail){
   const nick = state.nameByUserId.get(user_id);
   if(nick && String(nick).trim()) return nick;
@@ -617,71 +675,91 @@ function initMap(){
   const center = new kakao.maps.LatLng(37.5665, 126.9780);
   state.map = new kakao.maps.Map($('map'), { center, level: 6 });
   state.geocoder = new kakao.maps.services.Geocoder();
-
-  state.placeOverlayEl = document.createElement('div');
-  state.placeOverlayEl.style.pointerEvents = 'auto';
-
-  ['pointerdown','mousedown','touchstart','click'].forEach(ev=>{
-    state.placeOverlayEl.addEventListener(ev, (e)=> e.stopPropagation(), { passive:false });
-  });
-
-  state.placeOverlay = new kakao.maps.CustomOverlay({
-    content: state.placeOverlayEl,
-    xAnchor: 0.5,
-    yAnchor: 1.35,
-    zIndex: 1500
-  });
-
-  kakao.maps.event.addListener(state.map, 'click', () => hidePlaceOverlay());
 }
-function hidePlaceOverlay(){
-  if(state.placeOverlay) state.placeOverlay.setMap(null);
-}
-function renderPlaceOverlay(place){
-  if(!place) return;
-  const author = displayName(place.user_id);
-  const isMine = !!(state.user && place.user_id === state.user.id);
 
-  state.placeOverlayEl.innerHTML = `
-    <div class="kpop">
-      <div class="kpopHead">
-        <div class="kpopTitle">${esc(place.name)}</div>
-        <div class="kpopAddr">${esc(place.address)}</div>
-        <div class="kpopMeta">추가자: ${esc(author)}</div>
-      </div>
-      <div class="kpopBtns">
-        <button id="kpopVisits">기록</button>
-        <button id="kpopWrite" class="primary">작성</button>
-      </div>
-      ${isMine ? `
-        <div class="kpopAdmin">
-          <button id="kpopManage">관리</button>
-        </div>
-      ` : ``}
-    </div>
+/* ===== Place Bar (fixed UI above dock) ===== */
+function updatePlaceBar(){
+  const has = !!state.selectedPlace;
+  const pbName = $('pbName');
+  const pbAddr = $('pbAddr');
+  const pbMeta = $('pbMeta');
+
+  $('pbVisitsBtn').disabled = !has;
+  $('pbWriteBtn').disabled  = !has;
+  $('prevPlaceBtn').disabled = state.history.length === 0;
+  $('nextPlaceBtn').disabled = state.places.length <= 1;
+
+  if(!has){
+    pbName.textContent = '가게 선택';
+    pbAddr.textContent = '마커를 누르거나 ▶로 랜덤 이동';
+    pbMeta.innerHTML = '';
+    $('pbManageBtn').style.display = 'none';
+    return;
+  }
+
+  const p = state.selectedPlace;
+  const author = displayName(p.user_id);
+  const cnt = state.visitCounts.get(p.id) || 0;
+  const avg = state.avgRatings.get(p.id);
+  const avgText = (avg == null) ? '평점 없음' : `평균 ${avg.toFixed(1)}`;
+  const hot = (avg != null && avg >= 4.0);
+
+  pbName.textContent = p.name;
+  pbAddr.textContent = p.address;
+
+  pbMeta.innerHTML = `
+    <span>추가자: ${esc(author)}</span>
+    <span>방문기: ${cnt}개</span>
+    <span>${hot ? '❤️ ' : ''}${esc(avgText)}</span>
   `;
 
-  state.placeOverlayEl.querySelector('#kpopVisits')?.addEventListener('click', async () => {
-    if(!state.selectedPlace) return;
-    await openVisitsForPlace(state.selectedPlace.id);
-  });
-  state.placeOverlayEl.querySelector('#kpopWrite')?.addEventListener('click', async () => {
-    if(!requireNicknameOrGuide()) return;
-    if(!state.selectedPlace){ toast('가게부터 선택'); return; }
-    await openEditorForPlace(state.selectedPlace.id);
-  });
-  state.placeOverlayEl.querySelector('#kpopManage')?.addEventListener('click', async () => {
-    if(!requireNicknameOrGuide()) return;
-    await openPlaceManage(state.selectedPlace.id);
-  });
-
-  const pos = new kakao.maps.LatLng(place.lat, place.lng);
-  state.placeOverlay.setPosition(pos);
-  state.placeOverlay.setMap(state.map);
+  const isMine = !!(state.user && p.user_id === state.user.id);
+  $('pbManageBtn').style.display = isMine ? 'inline-flex' : 'none';
 }
 
-/* ===== Heart marker images (fixed heart, strong status diffs) ===== */
-function svgHeartMarker({ size, fill, stroke, ring, glow, selected }){
+function panToSelectedPlace(){
+  if(!state.map || !state.selectedPlace) return;
+  const pos = new kakao.maps.LatLng(state.selectedPlace.lat, state.selectedPlace.lng);
+  // Smooth move (no instant snap)
+  state.map.panTo(pos);
+}
+
+async function setSelectedPlace(placeId, { pushHistory=false, pan=true } = {}){
+  const p = state.places.find(x => x.id === placeId);
+  if(!p) return;
+
+  if(pushHistory && state.selectedPlace && state.selectedPlace.id !== placeId){
+    state.history.push(state.selectedPlace.id);
+  }
+
+  state.selectedPlace = p;
+  await fetchNicknames([p.user_id]);
+
+  updatePlaceBar();
+  refreshMarkerImages();
+
+  if(pan) panToSelectedPlace();
+}
+
+async function gotoRandomNext(){
+  if(state.places.length <= 1) return;
+
+  const cur = state.selectedPlace?.id;
+  const candidates = state.places.filter(p => p.id !== cur);
+  if(candidates.length === 0) return;
+
+  const pick = candidates[Math.floor(Math.random() * candidates.length)];
+  await setSelectedPlace(pick.id, { pushHistory:true, pan:true });
+}
+
+async function gotoPrev(){
+  if(state.history.length === 0){ toast('이전 기록 없음'); return; }
+  const prevId = state.history.pop();
+  await setSelectedPlace(prevId, { pushHistory:false, pan:true });
+}
+
+/* ===== Heart marker SVG (NO shadow, inverted ring/bg) ===== */
+function svgHeartMarker({ size, heartFill, heartStroke, heartFillOn, selected }){
   const S = size;
   const cx = S/2, cy = S/2;
 
@@ -694,61 +772,77 @@ function svgHeartMarker({ size, fill, stroke, ring, glow, selected }){
     Z
   `.trim();
 
-  const bg = 'rgba(18,20,28,.82)';
+  // inverted: light body, dark border
+  const circleFill = 'rgba(255,255,255,.93)';
+  const circleStroke = 'rgba(18,20,28,.92)';
+
+  // selection: ONLY “fill heart” (no size bump)
+  const fill = selected ? heartFillOn : heartFill;
 
   const svg = `
   <svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
-    <defs>
-      <filter id="ds" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="rgba(0,0,0,.60)"/>
-      </filter>
-      ${glow ? `
-      <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
-        <feDropShadow dx="0" dy="0" stdDeviation="3.2" flood-color="${glow}"/>
-      </filter>` : ``}
-    </defs>
-
-    <g filter="url(#ds)">
-      <circle cx="${cx}" cy="${cy}" r="${S*0.42}" fill="${bg}" stroke="${ring}" stroke-width="${Math.max(1.6, S*0.06)}"/>
-      <g ${glow ? `filter="url(#glow)"` : ``}>
-        <path d="${heartPath}" fill="${fill}" stroke="${stroke}" stroke-width="${Math.max(2.0, S*0.075)}" stroke-linejoin="round"/>
-      </g>
-      ${selected ? `<circle cx="${cx}" cy="${cy}" r="${S*0.47}" fill="none" stroke="rgba(255,255,255,.92)" stroke-width="${Math.max(2.2, S*0.07)}"/>` : ``}
-    </g>
+    <circle cx="${cx}" cy="${cy}" r="${S*0.42}" fill="${circleFill}" stroke="${circleStroke}" stroke-width="${Math.max(1.8, S*0.06)}"/>
+    <path d="${heartPath}" fill="${fill}" stroke="${heartStroke}" stroke-width="${Math.max(2.0, S*0.075)}" stroke-linejoin="round"/>
   </svg>`;
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
 }
 
+function countBucket(c){
+  if(c<=0) return '0';
+  if(c<=2) return '1';
+  if(c<=5) return '2';
+  return '3';
+}
+
 function markerImageForPlace(placeId){
   const count = state.visitCounts.get(placeId) || 0;
+  const avg = state.avgRatings.get(placeId);
   const selected = state.selectedPlace?.id === placeId;
 
-  // 상태를 확실하게:
-  // 0회: 작은 아웃라인(회청)
-  // 1-2: 중간 크기 파랑 채움
-  // 3-5: 큰 보라 채움
-  // 6+: 매우 큼 빨강 + 글로우
-  let size = 24, fill = 'none', stroke = 'rgba(138,160,189,.95)', ring = 'rgba(255,255,255,.70)', glow = null;
+  // size depends ONLY on visit count (NOT selection)
+  let size = 24;
+  if(count === 0) size = 24;
+  else if(count <= 2) size = 30;
+  else if(count <= 5) size = 36;
+  else size = 44;
 
-  if(count === 0){
-    size = 24; fill = 'none'; stroke = 'rgba(138,160,189,.95)'; ring = 'rgba(255,255,255,.70)';
-  } else if(count <= 2){
-    size = 28; fill = 'rgba(106,166,255,.92)'; stroke = 'rgba(106,166,255,.98)'; ring = 'rgba(255,255,255,.74)';
-  } else if(count <= 5){
-    size = 34; fill = 'rgba(160,107,255,.92)'; stroke = 'rgba(160,107,255,.98)'; ring = 'rgba(255,255,255,.78)';
+  // heart color:
+  // - avg >= 4.0 => RED heart (requested)
+  // - else color by visit count bucket
+  let stroke = 'rgba(18,20,28,.92)';
+  let fillOff = 'none';
+  let fillOn  = 'rgba(18,20,28,.92)'; // selection fill (for empty hearts)
+
+  const hot = (avg != null && avg >= 4.0);
+  if(hot){
+    stroke = 'rgba(255,77,109,.98)';
+    fillOff = 'rgba(255,77,109,.92)';
+    fillOn  = 'rgba(255,77,109,.92)';
   } else {
-    size = 40; fill = 'rgba(255,77,109,.92)'; stroke = 'rgba(255,77,109,.98)'; ring = 'rgba(255,255,255,.82)'; glow = 'rgba(255,77,109,.75)';
+    if(count === 0){
+      stroke = 'rgba(18,20,28,.82)';
+      fillOff = 'none';
+      fillOn  = 'rgba(18,20,28,.90)'; // selected: filled heart
+    } else if(count <= 2){
+      stroke = 'rgba(106,166,255,.98)';
+      fillOff = 'rgba(106,166,255,.92)';
+      fillOn  = 'rgba(106,166,255,.92)';
+    } else if(count <= 5){
+      stroke = 'rgba(160,107,255,.98)';
+      fillOff = 'rgba(160,107,255,.92)';
+      fillOn  = 'rgba(160,107,255,.92)';
+    } else {
+      // 6+ : bigger is the main signal, keep deep tone
+      stroke = 'rgba(18,20,28,.92)';
+      fillOff = 'rgba(18,20,28,.88)';
+      fillOn  = 'rgba(18,20,28,.88)';
+    }
   }
 
-  if(selected){
-    size += 6;
-    ring = 'rgba(255,255,255,.92)';
-  }
-
-  const key = `heart:${countBucket(count)}:${selected?'sel':'n'}:${size}`;
+  const key = `heart:${countBucket(count)}:${hot?'hot':'n'}:${selected?'sel':'n'}:${size}`;
   if(state.markerImageCache.has(key)) return state.markerImageCache.get(key);
 
-  const url = svgHeartMarker({ size, fill, stroke, ring, glow, selected });
+  const url = svgHeartMarker({ size, heartFill: fillOff, heartStroke: stroke, heartFillOn: fillOn, selected });
   const img = new kakao.maps.MarkerImage(
     url,
     new kakao.maps.Size(size, size),
@@ -757,12 +851,7 @@ function markerImageForPlace(placeId){
   state.markerImageCache.set(key, img);
   return img;
 }
-function countBucket(c){
-  if(c<=0) return '0';
-  if(c<=2) return '1';
-  if(c<=5) return '2';
-  return '3';
-}
+
 function refreshMarkerImages(){
   for(const [pid, marker] of state.markers.entries()){
     marker.setImage(markerImageForPlace(pid));
@@ -795,6 +884,8 @@ async function initSupabase(){
       $('myPlacesCount').textContent = '-';
       $('myVisitsCount').textContent = '-';
       updateDockUI();
+      updatePlaceBar();
+      refreshMarkerImages();
     }
   });
 }
@@ -803,6 +894,8 @@ async function afterLoginOrRefresh(){
   await ensureMyProfile();
   await loadMyStats();
   updateDockUI();
+  updatePlaceBar();
+  refreshMarkerImages();
 }
 
 async function fetchNicknames(userIds){
@@ -904,24 +997,69 @@ async function loadPlaces(){
   await fetchNicknames(state.places.map(p => p.user_id));
 }
 
-async function loadVisitCounts(){
+async function loadVisitStats(){
+  // counts + avg ratings in one pass
   const { data, error } = await state.sb
     .from('visits')
-    .select('place_id');
+    .select('place_id, rating');
 
   if(error){
     console.error(error);
     state.visitCounts = new Map();
+    state.avgRatings = new Map();
     return;
   }
-  const m = new Map();
+
+  const counts = new Map();
+  const sum = new Map();
+  const n = new Map();
+
   for(const row of (data ?? [])){
-    const id = row.place_id;
-    m.set(id, (m.get(id) || 0) + 1);
+    const pid = row.place_id;
+    counts.set(pid, (counts.get(pid) || 0) + 1);
+
+    if(row.rating != null){
+      sum.set(pid, (sum.get(pid) || 0) + Number(row.rating));
+      n.set(pid, (n.get(pid) || 0) + 1);
+    }
   }
-  state.visitCounts = m;
+
+  const avgs = new Map();
+  for(const [pid, c] of counts.entries()){
+    const nn = n.get(pid) || 0;
+    if(nn === 0) avgs.set(pid, null);
+    else avgs.set(pid, (sum.get(pid) || 0) / nn);
+  }
+
+  state.visitCounts = counts;
+  state.avgRatings = avgs;
 }
 
+async function recomputePlaceStats(placeId){
+  const { data, error } = await state.sb
+    .from('visits')
+    .select('rating')
+    .eq('place_id', placeId);
+
+  if(error){ console.error(error); return; }
+
+  const list = data ?? [];
+  state.visitCounts.set(placeId, list.length);
+
+  let s = 0, nn = 0;
+  for(const v of list){
+    if(v.rating != null){
+      s += Number(v.rating);
+      nn += 1;
+    }
+  }
+  state.avgRatings.set(placeId, nn ? (s / nn) : null);
+
+  updatePlaceBar();
+  refreshMarkerImages();
+}
+
+/* ===== Marker handling ===== */
 function clearMarkers(){
   for(const m of state.markers.values()) m.setMap(null);
   state.markers.clear();
@@ -939,37 +1077,38 @@ function renderMarkers(){
     marker.setMap(state.map);
 
     kakao.maps.event.addListener(marker, 'click', async () => {
-      await openPlace(p.id);
+      // click -> update bottom bar selection + smooth pan
+      await setSelectedPlace(p.id, { pushHistory:true, pan:true });
     });
 
     state.markers.set(p.id, marker);
   }
 }
 
-async function openPlace(placeId){
-  const place = state.places.find(p => p.id === placeId);
-  if(!place) return;
-
-  state.selectedPlace = place;
-  await fetchNicknames([place.user_id]);
-
-  renderPlaceOverlay(place);
-  refreshMarkerImages();
-
-  const pos = new kakao.maps.LatLng(place.lat, place.lng);
-  state.map.setCenter(pos);
-  state.map.setLevel(Math.min(state.map.getLevel(), 4));
-}
-
-/* ===== Visit / Editor windows + Pin behavior ===== */
+/* ===== Visits / Editor / Manage ===== */
 function isVisitsOpen(){ return $('visitsWin').style.display !== 'none'; }
 function isEditorOpen(){ return $('editorWin').style.display !== 'none'; }
 
-async function openVisitsForPlace(placeId){
-  if(!state.selectedPlace || state.selectedPlace.id !== placeId){
-    state.selectedPlace = state.places.find(p => p.id === placeId) || state.selectedPlace;
-  }
+async function openVisitsForSelected(){
   if(!state.selectedPlace){ toast('가게 선택 필요'); return; }
+  await openVisitsForPlace(state.selectedPlace.id);
+}
+
+async function openEditorForSelected(){
+  if(!requireNicknameOrGuide()) return;
+  if(!state.selectedPlace){ toast('가게 선택 필요'); return; }
+  await openEditorForPlace(state.selectedPlace.id);
+}
+
+async function openManageForSelected(){
+  if(!requireNicknameOrGuide()) return;
+  if(!state.selectedPlace){ toast('가게 선택 필요'); return; }
+  await openPlaceManage(state.selectedPlace.id);
+}
+
+async function openVisitsForPlace(placeId){
+  const place = state.places.find(p => p.id === placeId);
+  if(!place){ toast('가게를 찾지 못함'); return; }
 
   if(isVisitsOpen() && state.visits.pin && state.visits.placeId && state.visits.placeId !== placeId){
     toast('기록 창이 핀 고정됨. 핀 해제 후 다른 가게 기록 열기.');
@@ -982,8 +1121,8 @@ async function openVisitsForPlace(placeId){
   bringToFront(win);
   win.style.display = 'block';
 
-  $('visitsTitle').textContent = `방문 기록 · ${state.selectedPlace.name}`;
-  $('visitsHint').textContent = '수정/삭제는 본인만. 작성은 팝오버 “작성”.';
+  $('visitsTitle').textContent = `방문 기록 · ${place.name}`;
+  $('visitsHint').textContent = '수정/삭제는 본인만.';
 
   await loadVisitsAndRender(placeId);
 }
@@ -1091,11 +1230,7 @@ async function loadVisitsAndRender(placeId){
         if(error){ console.error(error); toast(error.message || '삭제 실패'); return; }
 
         toast('삭제됨');
-        // count 갱신(빠르게)
-        const cur = state.visitCounts.get(placeId) || 0;
-        state.visitCounts.set(placeId, Math.max(0, cur-1));
-        refreshMarkerImages();
-
+        await recomputePlaceStats(placeId);
         await loadVisitsAndRender(placeId);
         await loadMyStats();
       });
@@ -1134,7 +1269,6 @@ async function saveVisit(){
 
       const place = state.places.find(p => p.id === placeId);
       $('editorTitle').textContent = `방문기 작성 · ${place ? place.name : ''}`;
-
     }else{
       const payload = {
         user_id: state.user.id,
@@ -1151,16 +1285,11 @@ async function saveVisit(){
       toast('저장됨');
       $('visitContent').value = '';
       $('visitRating').value = '';
-
-      // count 즉시 반영
-      const cur = state.visitCounts.get(placeId) || 0;
-      state.visitCounts.set(placeId, cur+1);
-      refreshMarkerImages();
     }
 
+    await recomputePlaceStats(placeId);
     await loadMyStats();
 
-    // visits 창이 같은 place를 보고 있으면 즉시 반영
     if(isVisitsOpen() && state.visits.placeId === placeId){
       await loadVisitsAndRender(placeId);
     }
@@ -1169,7 +1298,7 @@ async function saveVisit(){
   }
 }
 
-/* ===== Place edit/delete ===== */
+/* ===== Place edit/delete + duplicate guard ===== */
 function haversineMeters(lat1,lng1,lat2,lng2){
   const R = 6371000;
   const toRad = (x)=> x*Math.PI/180;
@@ -1226,13 +1355,11 @@ async function findDuplicateByProximity(lat, lng, thresholdMeters = 30, excludeI
 async function createPlace({ name, address, lat, lng }){
   if(!requireNicknameOrGuide()) return null;
 
-  // 중복 체크(이름+주소)
   const dup1 = await findDuplicateByNameAddress(name, address, null);
   if(dup1){
     toast('이미 등록된 가게야. 그쪽으로 이동할게.');
     return { id: dup1.id, existed:true };
   }
-  // 중복 체크(근접)
   const dup2 = await findDuplicateByProximity(lat, lng, 30, null);
   if(dup2){
     toast(`근처(${Math.round(dup2.dist)}m)에 이미 등록된 가게가 있어. 그쪽으로 이동할게.`);
@@ -1278,7 +1405,6 @@ async function updatePlace(placeId, { name, address, lat, lng }){
   const old = state.places.find(p => p.id === placeId);
   if(!old) return null;
 
-  // 중복 체크(자기 자신 제외)
   const dup1 = await findDuplicateByNameAddress(name, address, placeId);
   if(dup1){
     toast('이미 등록된 가게(이름+주소)가 있어. 수정 불가.');
@@ -1303,22 +1429,18 @@ async function updatePlace(placeId, { name, address, lat, lng }){
     return null;
   }
 
-  // local state update
   const idx = state.places.findIndex(p => p.id === placeId);
   if(idx >= 0) state.places[idx] = data;
 
-  // marker update
   const mk = state.markers.get(placeId);
   if(mk){
     mk.setPosition(new kakao.maps.LatLng(data.lat, data.lng));
     mk.setImage(markerImageForPlace(placeId));
   }
 
-  // overlay update
   if(state.selectedPlace?.id === placeId){
     state.selectedPlace = data;
-    renderPlaceOverlay(data);
-    refreshMarkerImages();
+    updatePlaceBar();
   }
 
   toast('가게 수정됨');
@@ -1334,7 +1456,6 @@ async function deletePlace(placeId){
   }
   if(!confirm('정말 이 가게를 삭제할까? (방문기록도 함께 삭제됨)')) return;
 
-  // visits 먼저 삭제 (FK cascade가 없어도 안전)
   const delVisits = await state.sb.from('visits').delete().eq('place_id', placeId);
   if(delVisits.error){
     console.error(delVisits.error);
@@ -1349,9 +1470,9 @@ async function deletePlace(placeId){
     return;
   }
 
-  // local state remove
   state.places = state.places.filter(p => p.id !== placeId);
   state.visitCounts.delete(placeId);
+  state.avgRatings.delete(placeId);
 
   const mk = state.markers.get(placeId);
   if(mk) mk.setMap(null);
@@ -1359,9 +1480,10 @@ async function deletePlace(placeId){
 
   if(state.selectedPlace?.id === placeId){
     state.selectedPlace = null;
-    hidePlaceOverlay();
+    updatePlaceBar();
+    refreshMarkerImages();
   }
-  // windows referencing this place
+
   if(state.visits.placeId === placeId && !state.visits.pin){
     $('visitsWin').style.display = 'none';
     state.visits.placeId = null;
@@ -1373,13 +1495,11 @@ async function deletePlace(placeId){
   $('placeWin').style.display = 'none';
   state.place.placeId = null;
 
-  refreshMarkerImages();
   await loadMyStats();
-
   toast('가게 삭제됨');
 }
 
-/* ===== Add / Place address search (event delegation to fix click bug) ===== */
+/* ===== Address search (geocoder) ===== */
 function setAddBusy(b){
   state.addBusy = b;
   $('addrSearchBtn').disabled = b;
@@ -1440,7 +1560,7 @@ window.addEventListener('DOMContentLoaded', () => {
   $('editorWin').addEventListener('pointerdown', ()=> bringToFront($('editorWin')));
   $('placeWin').addEventListener('pointerdown', ()=> bringToFront($('placeWin')));
 
-  // pin buttons
+  // pins
   setPinUI($('visitsPinBtn'), state.visits.pin);
   setPinUI($('editorPinBtn'), state.editor.pin);
 
@@ -1455,7 +1575,7 @@ window.addEventListener('DOMContentLoaded', () => {
     toast(state.editor.pin ? '작성 창 핀 ON' : '작성 창 핀 OFF');
   });
 
-  // close buttons
+  // close
   $('closeVisitsBtn').addEventListener('click', (e)=>{ e.stopPropagation(); $('visitsWin').style.display = 'none'; });
   $('closeEditorBtn').addEventListener('click', (e)=>{ e.stopPropagation(); $('editorWin').style.display = 'none'; });
   $('closePlaceBtn').addEventListener('click', (e)=>{ e.stopPropagation(); $('placeWin').style.display = 'none'; });
@@ -1473,6 +1593,13 @@ window.addEventListener('DOMContentLoaded', () => {
     toast('편집 취소');
   });
   $('saveVisitBtn').addEventListener('click', saveVisit);
+
+  // placebar buttons
+  $('pbVisitsBtn').addEventListener('click', openVisitsForSelected);
+  $('pbWriteBtn').addEventListener('click', openEditorForSelected);
+  $('pbManageBtn').addEventListener('click', openManageForSelected);
+  $('nextPlaceBtn').addEventListener('click', gotoRandomNext);
+  $('prevPlaceBtn').addEventListener('click', gotoPrev);
 
   // add flow
   $('addBtn').addEventListener('click', ()=>{
@@ -1516,9 +1643,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
       await afterLoginOrRefresh();
       await loadPlaces();
-      await loadVisitCounts();
+      await loadVisitStats();
       renderMarkers();
       refreshMarkerImages();
+      updatePlaceBar();
     } finally {
       $('loginBtn').disabled = false;
     }
@@ -1557,7 +1685,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // nickname save (업서트 + auth 메타데이터 동기화)
+  // nickname save
   $('saveNickBtn').addEventListener('click', async ()=>{
     if(!requireSb()) return;
     if(!state.user){ toast('로그인 필요'); return; }
@@ -1577,6 +1705,7 @@ window.addEventListener('DOMContentLoaded', () => {
       await ensureMyProfile();
       toast('닉네임 저장됨');
       updateDockUI();
+      updatePlaceBar();
     } catch (e){
       console.error(e);
       toast('닉네임 저장 실패(중복일 수 있음)');
@@ -1617,7 +1746,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // event delegation: results click (fix intermittent click bug)
+  // results click (event delegation)
   $('results').addEventListener('click', async (e)=>{
     const item = e.target.closest('.resultItem');
     if(!item) return;
@@ -1644,27 +1773,30 @@ window.addEventListener('DOMContentLoaded', () => {
 
       if(created.existed){
         await loadPlaces();
-        await loadVisitCounts();
+        await loadVisitStats();
         renderMarkers();
-        await openPlace(created.id);
+        await setSelectedPlace(created.id, { pushHistory:true, pan:true });
         return;
       }
 
-      // UI 즉시 반영 (새로고침 필요 버그 방지 핵심)
+      // local update
       state.places.unshift(created);
       state.visitCounts.set(created.id, 0);
+      state.avgRatings.set(created.id, null);
 
-      // marker 추가
+      // add marker
       const marker = new kakao.maps.Marker({
         position: new kakao.maps.LatLng(created.lat, created.lng),
         image: markerImageForPlace(created.id)
       });
       marker.setMap(state.map);
-      kakao.maps.event.addListener(marker, 'click', async () => await openPlace(created.id));
+      kakao.maps.event.addListener(marker, 'click', async () => {
+        await setSelectedPlace(created.id, { pushHistory:true, pan:true });
+      });
       state.markers.set(created.id, marker);
 
       await loadMyStats();
-      await openPlace(created.id);
+      await setSelectedPlace(created.id, { pushHistory:true, pan:true });
       toast('가게 추가됨');
     } finally {
       setAddBusy(false);
@@ -1696,19 +1828,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // event delegation: placeResults click
   $('placeResults').addEventListener('click', (e)=>{
     const item = e.target.closest('.resultItem');
     if(!item) return;
     const addr = (item.dataset.addr || '').trim();
     $('editPlaceAddr').value = addr;
-    // lat/lng는 save에서 item에서 못 읽으니 임시로 window에 저장
     $('placeResults').dataset.pickLat = item.dataset.lat;
     $('placeResults').dataset.pickLng = item.dataset.lng;
     toast('후보 선택됨. 이제 “수정 저장”');
   });
 
-  // save place
   $('savePlaceBtn').addEventListener('click', async ()=>{
     if(!requireNicknameOrGuide()) return;
     const pid = state.place.placeId;
@@ -1721,7 +1850,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const address = ($('editPlaceAddr').value || '').trim();
     if(!name || !address){ toast('이름/주소 필요'); return; }
 
-    // 좌표: 후보를 선택했으면 그걸 쓰고, 아니면 기존 좌표 유지
     const lat = $('placeResults').dataset.pickLat ? Number($('placeResults').dataset.pickLat) : place.lat;
     const lng = $('placeResults').dataset.pickLng ? Number($('placeResults').dataset.pickLng) : place.lng;
 
@@ -1753,7 +1881,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // search
+  // search (Enter) -> select + smooth pan
   $('q').addEventListener('keydown', async (e)=>{
     if(e.key !== 'Enter') return;
     const q = ($('q').value || '').trim().toLowerCase();
@@ -1764,7 +1892,7 @@ window.addEventListener('DOMContentLoaded', () => {
       (p.address || '').toLowerCase().includes(q)
     );
     if(!hit){ toast('검색 결과 없음'); return; }
-    await openPlace(hit.id);
+    await setSelectedPlace(hit.id, { pushHistory:true, pan:true });
   });
 });
 
@@ -1775,18 +1903,25 @@ window.addEventListener('load', async ()=>{
   if(!state.sbReady) return;
 
   await loadPlaces();
-  await loadVisitCounts();
+  await loadVisitStats();
   renderMarkers();
   refreshMarkerImages();
 
-  if(state.user){
-    await afterLoginOrRefresh();
-    updateDockUI();
+  // 초기부터 place bar에 가게 정보를 보여주기 (랜덤 1개 선택, but pan은 안 함)
+  if(state.places.length > 0){
+    const initial = state.places[Math.floor(Math.random() * state.places.length)];
+    await setSelectedPlace(initial.id, { pushHistory:false, pan:false });
+  } else {
+    state.selectedPlace = null;
+    updatePlaceBar();
   }
 
-  // default pin UI
-  setPinUI($('visitsPinBtn'), state.visits.pin);
-  setPinUI($('editorPinBtn'), state.editor.pin);
+  if(state.user){
+    await afterLoginOrRefresh();
+  } else {
+    updateDockUI();
+    updatePlaceBar();
+  }
 });
 </script>
 </body>
