@@ -8,7 +8,7 @@
   <!-- favicon 404 방지 -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23ffd84a' d='M32 56s-20-12.7-27.3-23.6C-1.5 22 5.7 10 18 10c6.2 0 10.3 3.4 14 8 3.7-4.6 7.8-8 14-8 12.3 0 19.5 12 13.3 22.4C52 43.3 32 56 32 56z'/%3E%3C/svg%3E">
 
-  <!-- Kakao Maps: autoload=false 로 두고, JS에서 kakao.maps.load()로 안전하게 초기화 -->
+  <!-- Kakao Maps -->
   <script defer src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=5c2fb05e6765f133c747e1f5a2bdf64d&libraries=services&autoload=false"></script>
 
   <!-- Supabase JS v2 -->
@@ -161,12 +161,52 @@
     }
     #dock .btn{ padding: 10px 10px; border-radius: 14px; }
 
+    /* 검색 후보 리스트 */
+    #suggest{
+      position: fixed;
+      z-index: 26;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 72px;
+      width: min(520px, calc(100vw - 24px));
+      display: none;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(10,10,12,.96);
+      box-shadow: var(--shadow2);
+      overflow: hidden;
+    }
+    #suggest .shead{
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between;
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+    #suggest .slist{ padding: 10px; display:flex; flex-direction:column; gap:8px; }
+    .sitem{
+      text-align:left;
+      width:100%;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      cursor:pointer;
+      color: var(--txt);
+    }
+    .sitem:hover{ border-color: rgba(255,255,255,.22); }
+    .sitem .name{ font-weight: 900; color: var(--accent); }
+    .sitem .addr{ margin-top:4px; font-size: 12px; color: var(--muted2); }
+    .sitem .meta{ margin-top:6px; font-family: var(--mono); font-size: 12px; color: var(--muted2); }
+
     #toast{
       position: fixed;
       z-index: 999;
       left: 50%;
       transform: translateX(-50%);
-      bottom: 86px;
+      bottom: 116px;
       background: rgba(0,0,0,.78);
       border: 1px solid var(--line);
       color: var(--txt);
@@ -211,54 +251,50 @@
       font-weight: 800;
     }
 
-    /* ===== SVG Heart Marker (도형 합성 제거) ===== */
+    /* ===== 마커: 검정 원 + 흰 테두리 + 노란 하트 ===== */
     .mkr{
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       padding: 0;
-      border: 0;
-      background: transparent;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.85);  /* 흰 테두리 */
+      background: #0b0b0d;                      /* 검정 원 바탕 */
       cursor: pointer;
-      filter: none;
-      transform-origin: center;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transform-origin:center;
+      filter: none;                              /* 그림자 없음 */
       -webkit-tap-highlight-color: transparent;
 
-      --mkr-fill: transparent;
-      --mkr-stroke: #ffd84a;
-      --mkr-stroke-w: 2.6;
+      --heart-fill: #ffd84a;     /* 기본 노란 하트 */
+      --heart-stroke: rgba(0,0,0,0);  /* 하트 윤곽선 없음 */
+      --heart-stroke-w: 0;
     }
-    .mkr:focus{ outline: none; }
-    .mkr svg{ width:100%; height:100%; display:block; }
+    .mkr:focus{ outline:none; }
+    .mkr svg{ width: 16px; height: 16px; display:block; }
     .mkr path{
-      fill: var(--mkr-fill);
-      stroke: var(--mkr-stroke);
-      stroke-width: var(--mkr-stroke-w);
+      fill: var(--heart-fill);
+      stroke: var(--heart-stroke);
+      stroke-width: var(--heart-stroke-w);
       stroke-linejoin: round;
       vector-effect: non-scaling-stroke;
     }
 
-    /* 방문 1회 이상: 채움 노랑 + 테두리 검정 */
-    .mkr.visited{
-      --mkr-fill: #ffd84a;
-      --mkr-stroke: #0b0b0d;
-    }
-
-    /* 평점 4 이상: 빨강 채움 (visited와 결합 시) */
-    .mkr.high{ --mkr-stroke: #ff4d4d; }
-    .mkr.high.visited{
-      --mkr-fill: #ff4d4d;
-      --mkr-stroke: #0b0b0d;
-    }
-
-    /* 선택: 채움 노랑 + 테두리 더 두껍게 */
+    /* 선택: 테두리 노랑 강조 */
     .mkr.sel{
-      --mkr-fill: #ffd84a;
-      --mkr-stroke: #0b0b0d;
-      --mkr-stroke-w: 3.4;
+      border-color: rgba(255,216,74,.95);
+    }
+
+    /* 평균 평점 4+ : 하트 빨강 */
+    .mkr.high{
+      --heart-fill: #ff4d4d;
     }
 
     /* 2회 이상 방문: 커짐 */
-    .mkr.multi{ transform: scale(1.35); }
+    .mkr.multi{
+      transform: scale(1.28);
+    }
 
     .kbd{ font-family: var(--mono); font-size: 12px; padding: 2px 6px; border:1px solid var(--line); border-radius:8px; color:var(--muted); background: rgba(0,0,0,.2); }
   </style>
@@ -268,7 +304,16 @@
   <div id="map"></div>
   <div id="toast"></div>
 
-  <!-- Place Remote -->
+  <!-- Search Suggest -->
+  <div id="suggest">
+    <div class="shead">
+      <div>SEARCH RESULTS</div>
+      <div id="sCount">0</div>
+    </div>
+    <div class="slist" id="sList"></div>
+  </div>
+
+  <!-- Place Bar (리모컨) -->
   <div id="placeBar" class="float" style="display:block; width:min(420px, calc(100vw - 24px));">
     <div class="hdr" data-handle>
       <div class="ttl">
@@ -284,13 +329,14 @@
       <div class="col" style="gap:10px;">
         <div>
           <div id="pbName" class="hl" style="font-size:16px; font-weight:900;">선택된 가게 없음</div>
-          <div id="pbAddr" class="muted" style="margin-top:4px;">마커를 눌러 가게를 선택해줘.</div>
+          <div id="pbAddr" class="muted" style="margin-top:4px;">검색 또는 마커를 눌러 선택해줘.</div>
         </div>
-        <div class="row">
-          <button id="pbVisits" class="btn">기록</button>
-          <button id="pbWrite" class="btn accent">작성</button>
-          <button id="pbManage" class="btn" disabled>관리</button>
+
+        <div class="row" style="gap:10px;">
+          <span class="pill" id="pbVisitsPill">방문: 0</span>
+          <span class="pill" id="pbAvgPill">평점: -</span>
         </div>
+
         <div class="row muted" style="font-size:12px;">
           <span class="kbd">드래그</span> 헤더 잡고 이동
         </div>
@@ -298,7 +344,7 @@
     </div>
   </div>
 
-  <!-- Visits Window (always open) -->
+  <!-- Visits Window -->
   <div id="visitsWin" class="float" style="display:none; width:min(460px, calc(100vw - 24px));">
     <div class="hdr" data-handle>
       <div class="ttl">
@@ -313,7 +359,7 @@
     </div>
   </div>
 
-  <!-- Editor Window (always open) -->
+  <!-- Editor Window -->
   <div id="editorWin" class="float" style="display:none; width:min(520px, calc(100vw - 24px));">
     <div class="hdr" data-handle>
       <div class="ttl">
@@ -350,7 +396,7 @@
     </div>
   </div>
 
-  <!-- Manage Window (always open) -->
+  <!-- Manage Window -->
   <div id="manageWin" class="float" style="display:none; width:min(460px, calc(100vw - 24px));">
     <div class="hdr" data-handle>
       <div class="ttl">
@@ -388,7 +434,7 @@
 
   <!-- Dock -->
   <div id="dock">
-    <input id="searchInput" placeholder="가게명 검색 (예: 을지로, 라멘, 성수…)" />
+    <input id="searchInput" placeholder="검색: 가게명/주소 (입력하면 후보가 뜸)" />
     <button id="btnAdd" class="btn accent">추가</button>
     <button id="btnAccount" class="btn">계정</button>
     <button id="btnLogin" class="btn">로그인</button>
@@ -504,8 +550,6 @@
       editingVisitId: null,
 
       nickCache: new Map(),
-      flyToken: 0,
-
       addCandidate: null,
     };
 
@@ -628,6 +672,59 @@
       win.addEventListener("pointerdown", ()=> bringToFront(win), {capture:true});
     }
 
+    // ====== SEARCH SUGGEST ======
+    function hideSuggest(){
+      $("suggest").style.display = "none";
+      $("sList").innerHTML = "";
+      $("sCount").textContent = "0";
+    }
+
+    function renderSuggest(q){
+      q = (q||"").trim().toLowerCase();
+      if (!q){
+        hideSuggest();
+        return;
+      }
+
+      const hits = S.places
+        .filter(p =>
+          (p.name||"").toLowerCase().includes(q) ||
+          (p.address||"").toLowerCase().includes(q)
+        )
+        .slice(0, 8);
+
+      $("sCount").textContent = String(hits.length);
+
+      if (hits.length === 0){
+        $("sList").innerHTML = `<div class="muted" style="padding:6px 2px;">검색 결과 없음</div>`;
+        $("suggest").style.display = "block";
+        return;
+      }
+
+      $("sList").innerHTML = hits.map(p=>{
+        const avg = (p.avg_rating === null || p.avg_rating === undefined) ? "-" : p.avg_rating.toFixed(2);
+        return `
+          <button class="sitem" data-id="${p.id}">
+            <div class="name">${escapeHtml(p.name || "(no name)")}</div>
+            <div class="addr">${escapeHtml(p.address || "")}</div>
+            <div class="meta">visits=${p.visit_count || 0} · avg=${avg}</div>
+          </button>
+        `;
+      }).join("");
+
+      $("suggest").style.display = "block";
+
+      $("sList").querySelectorAll(".sitem").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const id = btn.getAttribute("data-id");
+          if (!id) return;
+          await selectPlace(id, { focus: "center" });
+          $("searchInput").value = "";
+          hideSuggest();
+        });
+      });
+    }
+
     // ====== MAP / MARKERS ======
     function markerClassesFor(place){
       const isSel = (S.selectedPlaceId === place.id);
@@ -635,14 +732,13 @@
       const avg = place.avg_rating ?? null;
 
       const c = [];
-      if (vCount > 0) c.push("visited");
       if (avg !== null && avg >= 4) c.push("high");
       if (vCount >= 2) c.push("multi");
       if (isSel) c.push("sel");
       return c.join(" ");
     }
 
-    function markerSVGContent(place){
+    function markerContent(place){
       const classes = markerClassesFor(place);
       return `
         <button class="mkr ${classes}" data-placeid="${place.id}" aria-label="marker">
@@ -656,7 +752,7 @@
     function upsertOverlay(place){
       if (!S.map || !window.kakao?.maps) return;
       const pos = new kakao.maps.LatLng(place.lat, place.lng);
-      const content = markerSVGContent(place);
+      const content = markerContent(place);
 
       if (S.overlays.has(place.id)){
         const ov = S.overlays.get(place.id);
@@ -688,7 +784,7 @@
       for (const p of S.places){
         const ov = S.overlays.get(p.id);
         if (!ov) continue;
-        ov.setContent(markerSVGContent(p));
+        ov.setContent(markerContent(p));
       }
     }
 
@@ -703,51 +799,15 @@
         const pid = m.getAttribute("data-placeid");
         if (!pid) return;
         if (!S.placeById.has(pid)) return;
-        selectPlace(pid, { focus: "pan" });
+        hideSuggest();
+        selectPlace(pid, { focus: "center" });
       }, true);
     }
 
-    // smooth move (zoom out -> move -> zoom in)
-    function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
-    function haversine(lat1, lon1, lat2, lon2){
-      const R = 6371000, toRad = d=>d*Math.PI/180;
-      const dLat = toRad(lat2-lat1), dLon = toRad(lon2-lon1);
-      const A = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-      return 2*R*Math.atan2(Math.sqrt(A), Math.sqrt(1-A));
-    }
-
-    async function flyToPlace(place){
+    function centerToPlace(place){
       if (!S.map) return;
-      const token = ++S.flyToken;
-
       const target = new kakao.maps.LatLng(place.lat, place.lng);
-      const startLevel = S.map.getLevel();
-
-      const center = S.map.getCenter();
-      const dist = haversine(center.getLat(), center.getLng(), place.lat, place.lng);
-      const outBoost = dist > 6000 ? 3 : (dist > 2500 ? 2 : 1);
-      const outLevel = clamp(startLevel + outBoost, 1, 14);
-
-      S.map.setLevel(outLevel, { animate: { duration: 420 } });
-      await wait(450);
-      if (token !== S.flyToken) return;
-
-      if (typeof S.map.jump === "function"){
-        S.map.jump(target, outLevel, { animate: { duration: 900 } });
-        await wait(950);
-      } else {
-        S.map.panTo(target);
-        await wait(750);
-      }
-      if (token !== S.flyToken) return;
-
-      S.map.setLevel(startLevel, { animate: { duration: 520 } });
-      await wait(560);
-    }
-
-    function panToPlace(place){
-      if (!S.map) return;
-      S.map.panTo(new kakao.maps.LatLng(place.lat, place.lng));
+      S.map.setCenter(target);   // 애니메이션 삭제: 즉시 정렬
     }
 
     // ====== SUPABASE ======
@@ -916,9 +976,9 @@
       refreshOverlayStyles();
 
       if (place){
-        if (focus === "fly") flyToPlace(place);
-        if (focus === "pan") panToPlace(place);
+        if (focus === "center") centerToPlace(place);
       }
+
       await refreshSelectedPanels();
     }
 
@@ -926,8 +986,9 @@
       const place = currentPlace();
       if (!place){
         $("pbName").textContent = "선택된 가게 없음";
-        $("pbAddr").textContent = "마커를 눌러 가게를 선택해줘.";
-        $("pbManage").disabled = true;
+        $("pbAddr").textContent = "검색 또는 마커를 눌러 선택해줘.";
+        $("pbVisitsPill").textContent = "방문: 0";
+        $("pbAvgPill").textContent = "평점: -";
         $("pbPrev").disabled = S.places.length < 2;
         $("pbNext").disabled = S.places.length < 2;
         return;
@@ -935,9 +996,10 @@
 
       $("pbName").textContent = place.name || "(no name)";
       $("pbAddr").textContent = place.address || "(no address)";
+      $("pbVisitsPill").textContent = `방문: ${place.visit_count || 0}`;
 
-      const mine = S.user && place.created_by === S.user.id;
-      $("pbManage").disabled = !mine;
+      const avg = (place.avg_rating === null || place.avg_rating === undefined) ? "-" : place.avg_rating.toFixed(2);
+      $("pbAvgPill").textContent = `평점: ${avg}`;
 
       $("pbPrev").disabled = S.places.length < 2;
       $("pbNext").disabled = S.places.length < 2;
@@ -1149,17 +1211,7 @@
       const next = pickRandomNext();
       if (!next) return;
       S.lastRandomPlaceId = S.selectedPlaceId;
-      await selectPlace(next.id, { focus:"fly" });
-    }
-
-    function applySearch(q){
-      q = (q||"").trim().toLowerCase();
-      if (!q) return;
-      const hits = S.places.filter(p =>
-        (p.name||"").toLowerCase().includes(q) ||
-        (p.address||"").toLowerCase().includes(q)
-      );
-      toast(`검색: ${hits.length}개`);
+      await selectPlace(next.id, { focus:"center" });
     }
 
     // ====== ADD PLACE ======
@@ -1244,7 +1296,7 @@
 
       await refreshPlaces();
       const newest = S.places[0];
-      if (newest) await selectPlace(newest.id, { focus:"fly" });
+      if (newest) await selectPlace(newest.id, { focus:"center" });
     }
 
     // ====== ACCOUNT ======
@@ -1444,14 +1496,32 @@
         }
         openOv($("addOv"));
       });
-      $("searchInput").addEventListener("input", (e)=> applySearch(e.target.value));
+
+      // 검색: 입력하면 후보 리스트
+      $("searchInput").addEventListener("input", (e)=> renderSuggest(e.target.value));
+      $("searchInput").addEventListener("keydown", async (e)=>{
+        if (e.key === "Escape"){ hideSuggest(); return; }
+        if (e.key === "Enter"){
+          const first = $("sList").querySelector(".sitem");
+          if (first){
+            first.click();
+            e.preventDefault();
+          }
+        }
+      });
+
+      // 바깥 클릭하면 후보 닫기
+      document.addEventListener("pointerdown", (e)=>{
+        const sug = $("suggest");
+        const inp = $("searchInput");
+        if (sug.style.display === "none") return;
+        if (sug.contains(e.target) || inp.contains(e.target)) return;
+        hideSuggest();
+      });
 
       // placebar
       $("pbPrev").addEventListener("click", goRandomNext);
       $("pbNext").addEventListener("click", goRandomNext);
-      $("pbVisits").addEventListener("click", ()=> bringToFront($("visitsWin")));
-      $("pbWrite").addEventListener("click", ()=> bringToFront($("editorWin")));
-      $("pbManage").addEventListener("click", ()=> bringToFront($("manageWin")));
 
       // editor
       $("saveVisit").addEventListener("click", saveVisit);
@@ -1476,7 +1546,7 @@
 
       $("closeAcct").addEventListener("click", ()=>closeOv($("acctOv")));
 
-      // resize: 화면 밖으로 숨지 않게만
+      // resize
       window.addEventListener("resize", ()=>{
         ensureOnscreen($("placeBar"));
         ensureOnscreen($("visitsWin"));
