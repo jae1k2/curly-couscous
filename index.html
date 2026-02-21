@@ -17,6 +17,7 @@
       --muted2:rgba(255,255,255,.45);
       --txt:rgba(255,255,255,.92);
       --accent:#ffd84a;
+      --danger:#ff4d4d;
       --shadow:0 10px 22px rgba(0,0,0,.28);
       --shadow2:0 8px 18px rgba(0,0,0,.22);
       --radius:14px;
@@ -43,6 +44,7 @@
     .muted{color:var(--muted2)}
     .hl{color:var(--accent);font-weight:900}
     .sp{height:10px}
+    .hr{height:1px;background:var(--line);margin:10px 0}
 
     .btn{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--txt);
       border-radius:10px;padding:8px 10px;cursor:pointer;font-weight:700}
@@ -55,6 +57,7 @@
     input,textarea{width:100%;background:rgba(255,255,255,.04);color:var(--txt);
       border:1px solid var(--line);border-radius:12px;padding:10px;outline:none;font-size:14px}
     textarea{min-height:140px;resize:vertical}
+
     .list{display:flex;flex-direction:column;gap:8px}
     .card{border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:12px;padding:10px}
     .card .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
@@ -138,6 +141,7 @@
         <div class="row" style="gap:10px;">
           <span class="pill" id="pbVisitsPill">방문: 0</span>
           <span class="pill" id="pbAvgPill">평점: -</span>
+          <span class="pill" id="pbMinePill">OWNER: -</span>
         </div>
       </div>
     </div>
@@ -202,8 +206,8 @@
         <input id="editPlaceAddr" placeholder="주소" />
         <div class="sp"></div>
         <div class="row">
-          <button id="updatePlace" class="btn">수정 저장</button>
-          <button id="deletePlace" class="btn danger">가게 삭제</button>
+          <button id="updatePlace" class="btn">수정</button>
+          <button id="deletePlace" class="btn danger">삭제</button>
         </div>
       </div>
     </div>
@@ -287,14 +291,27 @@
   const SUPABASE_URL = "https://tqybsmrmzxnfuwypbazn.supabase.co";
   const SUPABASE_KEY = "sb_publishable_NOdwos9jU0jwL0AzvZrHHg_KSH5f2e1";
 
-  const S = { sb:null, map:null, geocoder:null, session:null, user:null,
+  const S = {
+    sb:null, map:null, geocoder:null,
+    session:null, user:null,
     places:[], placeById:new Map(), overlays:new Map(),
     selectedPlaceId:null, lastRandomPlaceId:null,
     visits:[], editingVisitId:null,
-    addCandidate:null
+    addCandidate:null,
   };
 
   const $ = (id)=>document.getElementById(id);
+
+  // 전역 에러를 “보이게”
+  window.addEventListener("error", (e)=>{
+    const msg = e?.message || "Unknown error";
+    toast(`JS ERROR\n${msg}`.slice(0, 180));
+  });
+  window.addEventListener("unhandledrejection", (e)=>{
+    const r = e?.reason;
+    const msg = (r && (r.message || String(r))) || "Unknown rejection";
+    toast(`PROMISE ERROR\n${msg}`.slice(0, 180));
+  });
 
   const toastEl = $("toast");
   let toastTimer=null;
@@ -302,7 +319,7 @@
     toastEl.textContent = msg;
     toastEl.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer=setTimeout(()=>toastEl.classList.remove("show"), 2400);
+    toastTimer=setTimeout(()=>toastEl.classList.remove("show"), 2600);
   }
 
   function openOv(el){ el.style.display="flex"; }
@@ -392,6 +409,21 @@
     win.addEventListener("pointerdown",()=>bringToFront(win),{capture:true});
   }
 
+  // 버튼 “먹통”처럼 느껴지는 거 방지용: 눌렀을 때 즉시 시각 피드백
+  async function runWithBusy(buttonEl, busyLabel, fn){
+    if(!buttonEl) return fn();
+    const prevText = buttonEl.textContent;
+    const prevDisabled = buttonEl.disabled;
+    buttonEl.disabled = true;
+    buttonEl.textContent = busyLabel;
+    try{
+      return await fn();
+    } finally {
+      buttonEl.textContent = prevText;
+      buttonEl.disabled = prevDisabled;
+    }
+  }
+
   // ===== SEARCH SUGGEST =====
   function hideSuggest(){
     $("suggest").style.display="none";
@@ -401,13 +433,18 @@
   function renderSuggest(q){
     q=(q||"").trim().toLowerCase();
     if(!q){ hideSuggest(); return; }
-    const hits=S.places.filter(p=>(p.name||"").toLowerCase().includes(q) || (p.address||"").toLowerCase().includes(q)).slice(0,8);
+    const hits=S.places
+      .filter(p=>(p.name||"").toLowerCase().includes(q) || (p.address||"").toLowerCase().includes(q))
+      .slice(0,8);
+
     $("sCount").textContent=String(hits.length);
+
     if(hits.length===0){
       $("sList").innerHTML=`<div class="muted" style="padding:6px 2px;">검색 결과 없음</div>`;
       $("suggest").style.display="block";
       return;
     }
+
     $("sList").innerHTML = hits.map(p=>{
       const avg = (p.avg_rating==null) ? "-" : p.avg_rating.toFixed(2);
       return `
@@ -417,7 +454,9 @@
           <div class="meta">visits=${p.visit_count||0} · avg=${avg}</div>
         </button>`;
     }).join("");
+
     $("suggest").style.display="block";
+
     $("sList").querySelectorAll(".sitem").forEach(btn=>{
       btn.addEventListener("click", async ()=>{
         const id=btn.getAttribute("data-id");
@@ -495,9 +534,10 @@
     S.map.setCenter(new kakao.maps.LatLng(place.lat, place.lng));
   }
 
-  // ===== SUPABASE / DATA =====
+  // ===== AUTH / HELPERS =====
   function isLoggedIn(){ return !!S.user; }
 
+  // ===== DATA =====
   async function refreshPlaces(){
     if(!S.sb) return;
     const { data: places, error } = await S.sb
@@ -579,8 +619,7 @@
       $("pbAddr").textContent="검색 또는 마커를 눌러 선택해줘.";
       $("pbVisitsPill").textContent="방문: 0";
       $("pbAvgPill").textContent="평점: -";
-      $("pbPrev").disabled=S.places.length<2;
-      $("pbNext").disabled=S.places.length<2;
+      $("pbMinePill").textContent="OWNER: -";
       return;
     }
     $("pbName").textContent=place.name||"(no name)";
@@ -588,12 +627,13 @@
     $("pbVisitsPill").textContent=`방문: ${place.visit_count||0}`;
     const avg=(place.avg_rating==null) ? "-" : place.avg_rating.toFixed(2);
     $("pbAvgPill").textContent=`평점: ${avg}`;
-    $("pbPrev").disabled=S.places.length<2;
-    $("pbNext").disabled=S.places.length<2;
+    const mine = (S.user && place.user_id === S.user.id);
+    $("pbMinePill").textContent = `OWNER: ${mine ? "ME" : "OTHER"}`;
   }
 
   async function refreshSelectedPanels(){
     const place=currentPlace();
+
     $("vwTag").textContent=place?"PLACE":"-";
     $("ewTag").textContent=place?"PLACE":"-";
     $("mwTag").textContent=place?"PLACE":"-";
@@ -603,13 +643,10 @@
       $("vwList").innerHTML="";
       $("vwCount").textContent="0";
       $("ewHint").textContent="가게를 선택한 뒤 작성하면 됨.";
-      $("saveVisit").disabled=true;
       $("mwHint").textContent="가게를 선택하면 관리 정보가 뜸.";
       $("mwMine").textContent="N/A";
       $("editPlaceName").value="";
       $("editPlaceAddr").value="";
-      $("updatePlace").disabled=true;
-      $("deletePlace").disabled=true;
       return;
     }
 
@@ -618,19 +655,18 @@
     $("mwHint").textContent = mine ? "내 가게: 수정/삭제 가능" : "공유 가게: 수정/삭제 불가";
     $("editPlaceName").value = place.name || "";
     $("editPlaceAddr").value = place.address || "";
-    $("updatePlace").disabled = !mine;
-    $("deletePlace").disabled = !mine;
 
     await refreshVisits(place.id);
     renderVisitsList();
 
     $("ewHint").innerHTML = `선택: <span class="hl">${escapeHtml(place.name||"")}</span> (로그인 시 저장 가능)`;
-    $("saveVisit").disabled = !isLoggedIn();
+    // 버튼 disabled로 막지 않고, 눌렀을 때 이유 토스트로 안내
   }
 
   function renderVisitsList(){
     const place=currentPlace();
     if(!place) return;
+
     $("vwHint").style.display="none";
     $("vwCount").textContent=String(S.visits.length);
 
@@ -690,39 +726,58 @@
     $("visitNote").value="";
   }
 
+  // ===== ACTIONS =====
   async function saveVisit(){
     const place=currentPlace();
     if(!place) return toast("가게를 먼저 선택");
     if(!isLoggedIn()) return toast("로그인 필요");
 
-    const visit_date=$("visitDate").value||null;
-    let rating=$("visitRating").value.trim();
-    rating=rating ? Number(rating) : null;
-    if(rating!==null && (!Number.isFinite(rating) || rating<1 || rating>5)) return toast("평점은 1~5");
-    const note=$("visitNote").value||"";
+    await runWithBusy($("saveVisit"), "저장중…", async ()=>{
+      const visit_date=$("visitDate").value||null;
 
-    const payload={ place_id:place.id, user_id:S.user.id, visit_date, rating, note };
+      let rating=$("visitRating").value.trim();
+      rating=rating ? Number(rating) : null;
+      if(rating!==null && (!Number.isFinite(rating) || rating<1 || rating>5)){
+        toast("평점은 1~5");
+        return;
+      }
 
-    if(S.editingVisitId){
-      const { error } = await S.sb.from("visits").update(payload).eq("id", S.editingVisitId);
-      if(error) return toast(`수정 실패\n${error.code||""} ${error.message||""}`.trim());
-      toast("수정 완료");
-    } else {
-      const { error } = await S.sb.from("visits").insert(payload);
-      if(error) return toast(`저장 실패\n${error.code||""} ${error.message||""}`.trim());
-      toast("저장 완료");
-    }
+      const note=$("visitNote").value||"";
+      const payload={ place_id:place.id, user_id:S.user.id, visit_date, rating, note };
 
-    clearEditor();
-    await refreshPlaces();
-    await refreshSelectedPanels();
+      if(S.editingVisitId){
+        const { error } = await S.sb.from("visits").update(payload).eq("id", S.editingVisitId);
+        if(error){
+          console.error(error);
+          toast(`수정 실패\n${error.code||""} ${error.message||""}`.trim());
+          return;
+        }
+        toast("수정 완료");
+      } else {
+        const { error } = await S.sb.from("visits").insert(payload);
+        if(error){
+          console.error(error);
+          toast(`저장 실패\n${error.code||""} ${error.message||""}`.trim());
+          return;
+        }
+        toast("저장 완료");
+      }
+
+      clearEditor();
+      await refreshPlaces();
+      await refreshSelectedPanels();
+    });
   }
 
   async function deleteVisit(visitId){
     if(!isLoggedIn()) return toast("로그인 필요");
     if(!confirm("이 방문 기록을 삭제할까?")) return;
     const { error } = await S.sb.from("visits").delete().eq("id", visitId);
-    if(error) return toast(`삭제 실패\n${error.code||""} ${error.message||""}`.trim());
+    if(error){
+      console.error(error);
+      toast(`삭제 실패\n${error.code||""} ${error.message||""}`.trim());
+      return;
+    }
     toast("삭제 완료");
     clearEditor();
     await refreshPlaces();
@@ -733,29 +788,48 @@
     const place=currentPlace();
     if(!place) return toast("가게 선택 필요");
     if(!isLoggedIn()) return toast("로그인 필요");
-    if(place.user_id!==S.user.id) return toast("내 가게만 수정 가능");
+
+    const mine = (place.user_id === S.user.id);
+    if(!mine) return toast("내가 추가한 가게만 수정 가능");
+
     const name=$("editPlaceName").value.trim();
     const address=$("editPlaceAddr").value.trim();
     if(!name || !address) return toast("가게명/주소 필요");
-    const { error } = await S.sb.from("places").update({ name, address }).eq("id", place.id);
-    if(error) return toast(`수정 실패\n${error.code||""} ${error.message||""}`.trim());
-    toast("가게 수정 완료");
-    await refreshPlaces();
-    if(S.selectedPlaceId) await selectPlace(S.selectedPlaceId, { focus:"none" });
+
+    await runWithBusy($("updatePlace"), "수정중…", async ()=>{
+      const { error } = await S.sb.from("places").update({ name, address }).eq("id", place.id);
+      if(error){
+        console.error(error);
+        toast(`수정 실패\n${error.code||""} ${error.message||""}`.trim());
+        return;
+      }
+      toast("수정 완료");
+      await refreshPlaces();
+      await selectPlace(place.id, { focus:"none" });
+    });
   }
 
   async function deletePlace(){
     const place=currentPlace();
     if(!place) return toast("가게 선택 필요");
     if(!isLoggedIn()) return toast("로그인 필요");
-    if(place.user_id!==S.user.id) return toast("내 가게만 삭제 가능");
+
+    const mine = (place.user_id === S.user.id);
+    if(!mine) return toast("내가 추가한 가게만 삭제 가능");
     if(!confirm("가게를 삭제할까?")) return;
-    const { error } = await S.sb.from("places").delete().eq("id", place.id);
-    if(error) return toast(`삭제 실패\n${error.code||""} ${error.message||""}`.trim());
-    toast("가게 삭제 완료");
-    S.selectedPlaceId=null;
-    await refreshPlaces();
-    await refreshSelectedPanels();
+
+    await runWithBusy($("deletePlace"), "삭제중…", async ()=>{
+      const { error } = await S.sb.from("places").delete().eq("id", place.id);
+      if(error){
+        console.error(error);
+        toast(`삭제 실패\n${error.code||""} ${error.message||""}`.trim());
+        return;
+      }
+      toast("삭제 완료");
+      S.selectedPlaceId=null;
+      await refreshPlaces();
+      await refreshSelectedPanels();
+    });
   }
 
   function pickRandomNext(){
@@ -773,7 +847,7 @@
     await selectPlace(next.id, { focus:"center" });
   }
 
-  // ===== ADD PLACE (핵심: user_id 넣기) =====
+  // ===== ADD PLACE =====
   async function geocodeCandidates(){
     const name=$("addName").value.trim();
     const addr=$("addAddr").value.trim();
@@ -830,13 +904,7 @@
       return;
     }
 
-    const payload = {
-      name,
-      address: addr,
-      lat: S.addCandidate.y,
-      lng: S.addCandidate.x,
-      user_id: S.user.id   // ✅ 핵심
-    };
+    const payload = { name, address: addr, lat: S.addCandidate.y, lng: S.addCandidate.x, user_id: S.user.id };
 
     const { data, error } = await S.sb
       .from("places")
@@ -845,7 +913,7 @@
       .single();
 
     if(error){
-      console.error("insert place error:", error);
+      console.error(error);
       toast(`추가 실패\n${error.code||""} ${error.message||""}`.trim());
       $("btnSavePlace").disabled = false;
       return;
@@ -873,7 +941,7 @@
     $("btnSavePlace").disabled = false;
   }
 
-  // ===== AUTH / ACCOUNT 최소 =====
+  // ===== AUTH / ACCOUNT (최소) =====
   async function openAccount(){
     const box=$("acctBody");
     if(!S.user){
@@ -902,7 +970,10 @@
     const password=$("loginPass").value;
     if(!email || !password) return toast("이메일/비번 필요");
     const { error } = await S.sb.auth.signInWithPassword({ email, password });
-    if(error) return toast(`로그인 실패\n${error.code||""} ${error.message||""}`.trim());
+    if(error){
+      console.error(error);
+      return toast(`로그인 실패\n${error.code||""} ${error.message||""}`.trim());
+    }
     toast("로그인");
     closeOv($("loginOv"));
     clearEditor();
@@ -916,14 +987,22 @@
     const password=$("signupPass").value;
     if(!nickname) return toast("닉네임 필요");
     if(!email || !password) return toast("이메일/비번 필요");
-    const { error } = await S.sb.auth.signUp({ email, password });
-    if(error) return toast(`회원가입 실패\n${error.code||""} ${error.message||""}`.trim());
+    const { data, error } = await S.sb.auth.signUp({ email, password });
+    if(error){
+      console.error(error);
+      return toast(`회원가입 실패\n${error.code||""} ${error.message||""}`.trim());
+    }
+    // profiles가 있으면 저장 (없어도 에러 무시)
+    try{
+      const uid=data.user?.id;
+      if(uid) await S.sb.from("profiles").upsert({ id: uid, nickname });
+    }catch(_){}
     toast("가입 완료 → 로그인");
     closeOv($("signupOv"));
     openOv($("loginOv"));
   }
 
-  // ===== BOOT =====
+  // ===== BOOT KAKAO MAP =====
   async function bootMap(){
     const ok = await waitFor(()=>window.kakao?.maps, 8000);
     if(!ok){ toast("카카오 지도 SDK 로딩 실패"); return; }
@@ -936,6 +1015,7 @@
     S.map=new kakao.maps.Map($("map"), { center, level:7 });
     S.geocoder=new kakao.maps.services.Geocoder();
     bindOverlayClicksOnce();
+
     refreshPlaces().then(async ()=>{
       if(!S.selectedPlaceId && S.places.length>0){
         await selectPlace(S.places[0].id, { focus:"none" });
@@ -945,6 +1025,7 @@
     });
   }
 
+  // ===== DOM READY =====
   document.addEventListener("DOMContentLoaded", async ()=>{
     makeDraggable($("placeBar"));
     makeDraggable($("visitsWin"));
@@ -966,6 +1047,7 @@
 
     clearEditor();
 
+    // Dock
     $("btnLogin").addEventListener("click", async ()=>{
       if(S.user){
         await S.sb?.auth.signOut();
@@ -984,6 +1066,7 @@
       openOv($("addOv"));
     });
 
+    // Search
     $("searchInput").addEventListener("input",(e)=>renderSuggest(e.target.value));
     $("searchInput").addEventListener("keydown",(e)=>{
       if(e.key==="Escape") hideSuggest();
@@ -998,14 +1081,17 @@
       hideSuggest();
     });
 
+    // Random nav
     $("pbPrev").addEventListener("click", goRandomNext);
     $("pbNext").addEventListener("click", goRandomNext);
 
+    // Editor & Manage
     $("saveVisit").addEventListener("click", saveVisit);
     $("cancelEdit").addEventListener("click", ()=>{ clearEditor(); toast("편집 취소"); });
     $("updatePlace").addEventListener("click", updatePlace);
     $("deletePlace").addEventListener("click", deletePlace);
 
+    // Auth overlays
     $("closeLogin").addEventListener("click", ()=>closeOv($("loginOv")));
     $("openSignup").addEventListener("click", ()=>{ closeOv($("loginOv")); openOv($("signupOv")); });
     $("doLogin").addEventListener("click", doLogin);
@@ -1014,12 +1100,15 @@
     $("backToLogin").addEventListener("click", ()=>{ closeOv($("signupOv")); openOv($("loginOv")); });
     $("doSignup").addEventListener("click", doSignup);
 
+    // Add place overlay
     $("closeAdd").addEventListener("click", ()=>closeOv($("addOv")));
     $("btnGeocode").addEventListener("click", geocodeCandidates);
     $("btnSavePlace").addEventListener("click", savePlace);
 
+    // Account overlay
     $("closeAcct").addEventListener("click", ()=>closeOv($("acctOv")));
 
+    // Resize
     window.addEventListener("resize", ()=>{
       ensureOnscreen($("placeBar"));
       ensureOnscreen($("visitsWin"));
@@ -1027,6 +1116,7 @@
       ensureOnscreen($("manageWin"));
     });
 
+    // Boot supabase
     const ok = await waitFor(()=>window.supabase?.createClient, 8000);
     if(!ok){ toast("Supabase SDK 로딩 실패"); return; }
 
