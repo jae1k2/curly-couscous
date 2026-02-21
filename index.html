@@ -43,7 +43,6 @@
     .muted{color:var(--muted2)}
     .hl{color:var(--accent);font-weight:900}
     .sp{height:10px}
-    .hr{height:1px;background:var(--line);margin:10px 0}
 
     .btn{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--txt);
       border-radius:10px;padding:8px 10px;cursor:pointer;font-weight:700}
@@ -288,15 +287,11 @@
   const SUPABASE_URL = "https://tqybsmrmzxnfuwypbazn.supabase.co";
   const SUPABASE_KEY = "sb_publishable_NOdwos9jU0jwL0AzvZrHHg_KSH5f2e1";
 
-  const S = {
-    sb:null, map:null, geocoder:null,
-    session:null, user:null, profile:null,
-    places:[], placeById:new Map(),
-    overlays:new Map(),
+  const S = { sb:null, map:null, geocoder:null, session:null, user:null,
+    places:[], placeById:new Map(), overlays:new Map(),
     selectedPlaceId:null, lastRandomPlaceId:null,
     visits:[], editingVisitId:null,
-    nickCache:new Map(),
-    addCandidate:null,
+    addCandidate:null
   };
 
   const $ = (id)=>document.getElementById(id);
@@ -348,13 +343,11 @@
     const maxX=window.innerWidth - r.width - pad;
     const dockTop=dockR.top - pad;
     const maxY=dockTop - r.height;
-
     let x=r.left, y=r.top;
     if(x<pad) x=pad;
     if(x>maxX) x=Math.max(pad,maxX);
     if(y<pad) y=pad;
     if(y>maxY) y=Math.max(pad,maxY);
-
     el.style.left=x+"px";
     el.style.top=y+"px";
   }
@@ -374,39 +367,28 @@
   function makeDraggable(win){
     const handle=win.querySelector("[data-handle]");
     if(!handle) return;
-
-    let dragging=false;
-    let startX=0,startY=0,startL=0,startT=0;
-
+    let dragging=false, startX=0,startY=0,startL=0,startT=0;
     handle.addEventListener("pointerdown",(e)=>{
       const tag=(e.target && e.target.tagName || "").toLowerCase();
       if(["button","input","textarea","select","a","label","path","svg"].includes(tag)) return;
-
       dragging=true;
       bringToFront(win);
-
       const r=win.getBoundingClientRect();
-      startX=e.clientX; startY=e.clientY;
-      startL=r.left; startT=r.top;
-
+      startX=e.clientX; startY=e.clientY; startL=r.left; startT=r.top;
       handle.setPointerCapture(e.pointerId);
       e.preventDefault();
     });
-
     handle.addEventListener("pointermove",(e)=>{
       if(!dragging) return;
-      const dx=e.clientX-startX;
-      const dy=e.clientY-startY;
+      const dx=e.clientX-startX, dy=e.clientY-startY;
       win.style.left=(startL+dx)+"px";
       win.style.top=(startT+dy)+"px";
     });
-
     handle.addEventListener("pointerup",()=>{
       if(!dragging) return;
       dragging=false;
       ensureOnscreen(win);
     });
-
     win.addEventListener("pointerdown",()=>bringToFront(win),{capture:true});
   }
 
@@ -416,23 +398,16 @@
     $("sList").innerHTML="";
     $("sCount").textContent="0";
   }
-
   function renderSuggest(q){
     q=(q||"").trim().toLowerCase();
     if(!q){ hideSuggest(); return; }
-
-    const hits=S.places
-      .filter(p => (p.name||"").toLowerCase().includes(q) || (p.address||"").toLowerCase().includes(q))
-      .slice(0,8);
-
+    const hits=S.places.filter(p=>(p.name||"").toLowerCase().includes(q) || (p.address||"").toLowerCase().includes(q)).slice(0,8);
     $("sCount").textContent=String(hits.length);
-
     if(hits.length===0){
       $("sList").innerHTML=`<div class="muted" style="padding:6px 2px;">검색 결과 없음</div>`;
       $("suggest").style.display="block";
       return;
     }
-
     $("sList").innerHTML = hits.map(p=>{
       const avg = (p.avg_rating==null) ? "-" : p.avg_rating.toFixed(2);
       return `
@@ -440,12 +415,9 @@
           <div class="name">${escapeHtml(p.name||"(no name)")}</div>
           <div class="addr">${escapeHtml(p.address||"")}</div>
           <div class="meta">visits=${p.visit_count||0} · avg=${avg}</div>
-        </button>
-      `;
+        </button>`;
     }).join("");
-
     $("suggest").style.display="block";
-
     $("sList").querySelectorAll(".sitem").forEach(btn=>{
       btn.addEventListener("click", async ()=>{
         const id=btn.getAttribute("data-id");
@@ -459,52 +431,44 @@
 
   // ===== MAP / MARKERS =====
   function markerClassesFor(place){
-    const isSel = (S.selectedPlaceId === place.id);
-    const vCount = place.visit_count || 0;
-    const avg = place.avg_rating ?? null;
+    const isSel=(S.selectedPlaceId===place.id);
+    const vCount=place.visit_count||0;
+    const avg=place.avg_rating??null;
     const c=[];
     if(avg!=null && avg>=4) c.push("high");
     if(vCount>=2) c.push("multi");
     if(isSel) c.push("sel");
     return c.join(" ");
   }
-
   function markerContent(place){
     const classes=markerClassesFor(place);
     return `
-      <button class="mkr ${classes}" data-placeid="${place.id}" aria-label="marker">
+      <button class="mkr ${classes}" data-placeid="${place.id}">
         <svg viewBox="0 0 64 64" aria-hidden="true">
           <path d="M32 56s-20-12.7-27.3-23.6C-1.5 22 5.7 10 18 10c6.2 0 10.3 3.4 14 8 3.7-4.6 7.8-8 14-8 12.3 0 19.5 12 13.3 22.4C52 43.3 32 56 32 56z"/>
         </svg>
-      </button>
-    `;
+      </button>`;
   }
-
   function upsertOverlay(place){
     if(!S.map || !window.kakao?.maps) return;
     const pos=new kakao.maps.LatLng(place.lat, place.lng);
     const content=markerContent(place);
-
     if(S.overlays.has(place.id)){
       const ov=S.overlays.get(place.id);
       ov.setPosition(pos);
       ov.setContent(content);
       return;
     }
-    const ov=new kakao.maps.CustomOverlay({
-      position:pos, content, clickable:true, yAnchor:1, zIndex:10
-    });
+    const ov=new kakao.maps.CustomOverlay({ position:pos, content, clickable:true, yAnchor:1, zIndex:10 });
     ov.setMap(S.map);
     S.overlays.set(place.id, ov);
   }
-
   function rebuildAllOverlays(){
     if(!S.map || !window.kakao?.maps) return;
     for(const ov of S.overlays.values()) ov.setMap(null);
     S.overlays.clear();
     for(const p of S.places) upsertOverlay(p);
   }
-
   function refreshOverlayStyles(){
     if(!S.map || !window.kakao?.maps) return;
     for(const p of S.places){
@@ -513,62 +477,32 @@
       ov.setContent(markerContent(p));
     }
   }
-
   function bindOverlayClicksOnce(){
     const mapEl=$("map");
     if(mapEl.__mkrBound) return;
     mapEl.__mkrBound=true;
-
     mapEl.addEventListener("click",(e)=>{
       const m=e.target?.closest?.(".mkr");
       if(!m) return;
       const pid=m.getAttribute("data-placeid");
-      if(!pid) return;
-      if(!S.placeById.has(pid)) return;
+      if(!pid || !S.placeById.has(pid)) return;
       hideSuggest();
       selectPlace(pid,{focus:"center"});
     }, true);
   }
-
   function centerToPlace(place){
     if(!S.map) return;
-    S.map.setCenter(new kakao.maps.LatLng(place.lat, place.lng)); // 애니메이션 없음
+    S.map.setCenter(new kakao.maps.LatLng(place.lat, place.lng));
   }
 
-  // ===== SUPABASE =====
+  // ===== SUPABASE / DATA =====
   function isLoggedIn(){ return !!S.user; }
-
-  async function bootSupabase(){
-    const ok = await waitFor(()=>window.supabase?.createClient, 8000);
-    if(!ok){ toast("Supabase SDK 로딩 실패"); return; }
-
-    S.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth:{ detectSessionInUrl:true } });
-
-    const { data } = await S.sb.auth.getSession();
-    S.session = data.session;
-    S.user = data.session?.user ?? null;
-
-    S.sb.auth.onAuthStateChange(async (_event, session)=>{
-      S.session=session;
-      S.user=session?.user ?? null;
-      renderDockAuth();
-      await refreshPlaces();
-      await refreshSelectedPanels();
-    });
-
-    renderDockAuth();
-  }
-
-  function renderDockAuth(){
-    $("btnLogin").textContent = S.user ? "로그아웃" : "로그인";
-  }
 
   async function refreshPlaces(){
     if(!S.sb) return;
-
     const { data: places, error } = await S.sb
       .from("places")
-      .select("id, name, address, lat, lng, created_by, created_at")
+      .select("id, name, address, lat, lng, user_id, created_at")
       .order("created_at", { ascending:false });
 
     if(error){
@@ -578,7 +512,6 @@
     }
 
     const { data: stats, error: e2 } = await S.sb.from("visits").select("place_id, rating");
-
     const statMap=new Map();
     if(!e2 && Array.isArray(stats)){
       for(const v of stats){
@@ -589,7 +522,7 @@
       }
     }
 
-    S.places = (places||[]).map(p=>{
+    S.places=(places||[]).map(p=>{
       const st=statMap.get(p.id);
       const count=st?.count ?? 0;
       const avg=(st && st.n>0) ? (st.sum/st.n) : null;
@@ -598,7 +531,7 @@
 
     S.placeById.clear();
     for(const p of S.places) S.placeById.set(p.id,p);
-    $("pbCount").textContent = String(S.places.length);
+    $("pbCount").textContent=String(S.places.length);
 
     if(S.map && window.kakao?.maps){
       rebuildAllOverlays();
@@ -606,9 +539,7 @@
       refreshOverlayStyles();
     }
 
-    if(S.selectedPlaceId && !S.placeById.has(S.selectedPlaceId)){
-      S.selectedPlaceId=null;
-    }
+    if(S.selectedPlaceId && !S.placeById.has(S.selectedPlaceId)) S.selectedPlaceId=null;
     renderPlaceBar();
   }
 
@@ -626,15 +557,13 @@
       toast(`visits 로딩 실패\n${error.code||""} ${error.message||""}`.trim());
       return;
     }
-    S.visits = data || [];
+    S.visits=data||[];
   }
 
-  // ===== SELECTION =====
-  function currentPlace(){
-    return S.selectedPlaceId ? S.placeById.get(S.selectedPlaceId) : null;
-  }
+  // ===== SELECTION / UI =====
+  function currentPlace(){ return S.selectedPlaceId ? S.placeById.get(S.selectedPlaceId) : null; }
 
-  async function selectPlace(placeId, { focus="none" } = {}){
+  async function selectPlace(placeId,{focus="none"}={}){
     S.selectedPlaceId=placeId;
     const place=currentPlace();
     renderPlaceBar();
@@ -650,8 +579,8 @@
       $("pbAddr").textContent="검색 또는 마커를 눌러 선택해줘.";
       $("pbVisitsPill").textContent="방문: 0";
       $("pbAvgPill").textContent="평점: -";
-      $("pbPrev").disabled = S.places.length < 2;
-      $("pbNext").disabled = S.places.length < 2;
+      $("pbPrev").disabled=S.places.length<2;
+      $("pbNext").disabled=S.places.length<2;
       return;
     }
     $("pbName").textContent=place.name||"(no name)";
@@ -659,15 +588,15 @@
     $("pbVisitsPill").textContent=`방문: ${place.visit_count||0}`;
     const avg=(place.avg_rating==null) ? "-" : place.avg_rating.toFixed(2);
     $("pbAvgPill").textContent=`평점: ${avg}`;
-    $("pbPrev").disabled = S.places.length < 2;
-    $("pbNext").disabled = S.places.length < 2;
+    $("pbPrev").disabled=S.places.length<2;
+    $("pbNext").disabled=S.places.length<2;
   }
 
   async function refreshSelectedPanels(){
     const place=currentPlace();
-    $("vwTag").textContent = place ? "PLACE" : "-";
-    $("ewTag").textContent = place ? "PLACE" : "-";
-    $("mwTag").textContent = place ? "PLACE" : "-";
+    $("vwTag").textContent=place?"PLACE":"-";
+    $("ewTag").textContent=place?"PLACE":"-";
+    $("mwTag").textContent=place?"PLACE":"-";
 
     if(!place){
       $("vwHint").style.display="block";
@@ -684,7 +613,7 @@
       return;
     }
 
-    const mine = (S.user && place.created_by === S.user.id);
+    const mine = (S.user && place.user_id === S.user.id);
     $("mwMine").textContent = mine ? "MINE" : "PUBLIC";
     $("mwHint").textContent = mine ? "내 가게: 수정/삭제 가능" : "공유 가게: 수정/삭제 불가";
     $("editPlaceName").value = place.name || "";
@@ -702,7 +631,6 @@
   function renderVisitsList(){
     const place=currentPlace();
     if(!place) return;
-
     $("vwHint").style.display="none";
     $("vwCount").textContent=String(S.visits.length);
 
@@ -712,7 +640,7 @@
     }
 
     const me=S.user?.id ?? null;
-    $("vwList").innerHTML = S.visits.map(v=>{
+    $("vwList").innerHTML=S.visits.map(v=>{
       const date=v.visit_date || (v.created_at ? v.created_at.slice(0,10) : "");
       const rating=(typeof v.rating==="number") ? `⭐ ${v.rating}` : "⭐ -";
       const mine=(me && v.user_id===me);
@@ -727,8 +655,7 @@
           </div>
           <div class="sp"></div>
           <div class="note">${escapeHtml(v.note||"")}</div>
-        </div>
-      `;
+        </div>`;
     }).join("");
 
     $("vwList").querySelectorAll("button.mini").forEach(btn=>{
@@ -778,11 +705,11 @@
 
     if(S.editingVisitId){
       const { error } = await S.sb.from("visits").update(payload).eq("id", S.editingVisitId);
-      if(error){ console.error(error); return toast(`수정 실패\n${error.code||""} ${error.message||""}`.trim()); }
+      if(error) return toast(`수정 실패\n${error.code||""} ${error.message||""}`.trim());
       toast("수정 완료");
     } else {
       const { error } = await S.sb.from("visits").insert(payload);
-      if(error){ console.error(error); return toast(`저장 실패\n${error.code||""} ${error.message||""}`.trim()); }
+      if(error) return toast(`저장 실패\n${error.code||""} ${error.message||""}`.trim());
       toast("저장 완료");
     }
 
@@ -795,7 +722,7 @@
     if(!isLoggedIn()) return toast("로그인 필요");
     if(!confirm("이 방문 기록을 삭제할까?")) return;
     const { error } = await S.sb.from("visits").delete().eq("id", visitId);
-    if(error){ console.error(error); return toast(`삭제 실패\n${error.code||""} ${error.message||""}`.trim()); }
+    if(error) return toast(`삭제 실패\n${error.code||""} ${error.message||""}`.trim());
     toast("삭제 완료");
     clearEditor();
     await refreshPlaces();
@@ -806,12 +733,12 @@
     const place=currentPlace();
     if(!place) return toast("가게 선택 필요");
     if(!isLoggedIn()) return toast("로그인 필요");
-    if(place.created_by!==S.user.id) return toast("내 가게만 수정 가능");
+    if(place.user_id!==S.user.id) return toast("내 가게만 수정 가능");
     const name=$("editPlaceName").value.trim();
     const address=$("editPlaceAddr").value.trim();
     if(!name || !address) return toast("가게명/주소 필요");
     const { error } = await S.sb.from("places").update({ name, address }).eq("id", place.id);
-    if(error){ console.error(error); return toast(`수정 실패\n${error.code||""} ${error.message||""}`.trim()); }
+    if(error) return toast(`수정 실패\n${error.code||""} ${error.message||""}`.trim());
     toast("가게 수정 완료");
     await refreshPlaces();
     if(S.selectedPlaceId) await selectPlace(S.selectedPlaceId, { focus:"none" });
@@ -821,10 +748,10 @@
     const place=currentPlace();
     if(!place) return toast("가게 선택 필요");
     if(!isLoggedIn()) return toast("로그인 필요");
-    if(place.created_by!==S.user.id) return toast("내 가게만 삭제 가능");
+    if(place.user_id!==S.user.id) return toast("내 가게만 삭제 가능");
     if(!confirm("가게를 삭제할까?")) return;
     const { error } = await S.sb.from("places").delete().eq("id", place.id);
-    if(error){ console.error(error); return toast(`삭제 실패\n${error.code||""} ${error.message||""}`.trim()); }
+    if(error) return toast(`삭제 실패\n${error.code||""} ${error.message||""}`.trim());
     toast("가게 삭제 완료");
     S.selectedPlaceId=null;
     await refreshPlaces();
@@ -839,7 +766,6 @@
     if(candidates.length===0) candidates=S.places.filter(p=>p.id!==current);
     return candidates[Math.floor(Math.random()*candidates.length)] || null;
   }
-
   async function goRandomNext(){
     const next=pickRandomNext();
     if(!next) return;
@@ -847,7 +773,7 @@
     await selectPlace(next.id, { focus:"center" });
   }
 
-  // ===== ADD PLACE (핵심 수정: insert 결과를 바로 받아서 즉시 마커 생성) =====
+  // ===== ADD PLACE (핵심: user_id 넣기) =====
   async function geocodeCandidates(){
     const name=$("addName").value.trim();
     const addr=$("addAddr").value.trim();
@@ -864,7 +790,6 @@
         $("candBox").innerHTML = `<div class="muted">후보 없음. 주소를 더 정확히 입력해줘.</div>`;
         return;
       }
-
       const list = result.slice(0,6).map((r,idx)=>{
         const label = r.road_address?.address_name || r.address?.address_name || "(unknown)";
         return `
@@ -872,12 +797,9 @@
             <div style="font-weight:900;color:var(--accent);">후보 ${idx+1}</div>
             <div class="muted" style="font-size:12px;">${escapeHtml(label)}</div>
             <div class="meta">(${Number(r.y).toFixed(6)}, ${Number(r.x).toFixed(6)})</div>
-          </button>
-        `;
+          </button>`;
       }).join("");
-
       $("candBox").innerHTML = `<div class="list">${list}</div>`;
-
       $("candBox").querySelectorAll("button.btn").forEach(btn=>{
         btn.addEventListener("click", ()=>{
           S.addCandidate = { x:Number(btn.getAttribute("data-x")), y:Number(btn.getAttribute("data-y")) };
@@ -901,10 +823,8 @@
 
     $("btnSavePlace").disabled = true;
 
-    // client 중복 체크(빠른 가드)
     const key = normalizeKey(name, addr);
-    const exists = S.places.some(p => normalizeKey(p.name, p.address) === key);
-    if(exists){
+    if(S.places.some(p => normalizeKey(p.name, p.address) === key)){
       toast("이미 등록된 가게(이름+주소)");
       $("btnSavePlace").disabled = false;
       return;
@@ -915,31 +835,23 @@
       address: addr,
       lat: S.addCandidate.y,
       lng: S.addCandidate.x,
-      created_by: S.user.id
+      user_id: S.user.id   // ✅ 핵심
     };
 
-    // ✅ insert 결과 즉시 받기
     const { data, error } = await S.sb
       .from("places")
       .insert(payload)
-      .select("id, name, address, lat, lng, created_by, created_at")
+      .select("id, name, address, lat, lng, user_id, created_at")
       .single();
 
     if(error){
       console.error("insert place error:", error);
-      const msg = (error.message||"").toLowerCase();
-      if(error.code === "23505" || msg.includes("duplicate")){
-        toast("이미 등록된 가게(DB)");
-      } else {
-        toast(`추가 실패\n${error.code||""} ${error.message||""}`.trim());
-      }
+      toast(`추가 실패\n${error.code||""} ${error.message||""}`.trim());
       $("btnSavePlace").disabled = false;
       return;
     }
 
-    // ✅ 즉시 로컬 반영 + 마커 생성 (refreshPlaces 실패해도 추가 체감 보장)
-    const newPlace = { ...data, visit_count: 0, avg_rating: null };
-
+    const newPlace = { ...data, visit_count:0, avg_rating:null };
     S.places.unshift(newPlace);
     S.placeById.set(newPlace.id, newPlace);
     $("pbCount").textContent = String(S.places.length);
@@ -951,39 +863,32 @@
 
     toast("가게 추가됨 ✅");
     closeOv($("addOv"));
+    $("addName").value=""; $("addAddr").value=""; $("candBox").innerHTML="";
+    S.addCandidate=null;
 
-    $("addName").value = "";
-    $("addAddr").value = "";
-    $("candBox").innerHTML = "";
-    S.addCandidate = null;
-
-    // 선택 + 위치 정렬
     await selectPlace(newPlace.id, { focus:"center" });
-
-    // 서버 기준으로 한 번 동기화 (선택 유지)
     await refreshPlaces();
     await selectPlace(newPlace.id, { focus:"none" });
 
     $("btnSavePlace").disabled = false;
   }
 
-  // ===== ACCOUNT / AUTH (최소) =====
+  // ===== AUTH / ACCOUNT 최소 =====
   async function openAccount(){
     const box=$("acctBody");
     if(!S.user){
-      box.innerHTML = `<div class="muted">로그인하면 계정 정보가 뜸.</div>`;
+      box.innerHTML=`<div class="muted">로그인하면 계정 정보가 뜸.</div>`;
       openOv($("acctOv"));
       return;
     }
-    box.innerHTML = `
+    box.innerHTML=`
       <div class="card">
         <div class="top"><div style="font-weight:900;">현재 로그인</div><div class="meta">AUTH</div></div>
         <div class="sp"></div>
         <div class="meta">${escapeHtml(S.user.email||"")}</div>
       </div>
       <div class="sp"></div>
-      <div class="row"><button class="btn danger" id="acctLogout">로그아웃</button></div>
-    `;
+      <div class="row"><button class="btn danger" id="acctLogout">로그아웃</button></div>`;
     box.querySelector("#acctLogout").addEventListener("click", async ()=>{
       await S.sb.auth.signOut();
       toast("로그아웃");
@@ -997,7 +902,7 @@
     const password=$("loginPass").value;
     if(!email || !password) return toast("이메일/비번 필요");
     const { error } = await S.sb.auth.signInWithPassword({ email, password });
-    if(error){ console.error(error); return toast(`로그인 실패\n${error.code||""} ${error.message||""}`.trim()); }
+    if(error) return toast(`로그인 실패\n${error.code||""} ${error.message||""}`.trim());
     toast("로그인");
     closeOv($("loginOv"));
     clearEditor();
@@ -1011,22 +916,14 @@
     const password=$("signupPass").value;
     if(!nickname) return toast("닉네임 필요");
     if(!email || !password) return toast("이메일/비번 필요");
-
-    const { data, error } = await S.sb.auth.signUp({ email, password });
-    if(error){ console.error(error); return toast(`회원가입 실패\n${error.code||""} ${error.message||""}`.trim()); }
-
-    // profiles upsert (있으면)
-    const uid=data.user?.id;
-    if(uid){
-      await S.sb.from("profiles").upsert({ id: uid, nickname });
-    }
-
+    const { error } = await S.sb.auth.signUp({ email, password });
+    if(error) return toast(`회원가입 실패\n${error.code||""} ${error.message||""}`.trim());
     toast("가입 완료 → 로그인");
     closeOv($("signupOv"));
     openOv($("loginOv"));
   }
 
-  // ===== BOOT KAKAO MAP =====
+  // ===== BOOT =====
   async function bootMap(){
     const ok = await waitFor(()=>window.kakao?.maps, 8000);
     if(!ok){ toast("카카오 지도 SDK 로딩 실패"); return; }
@@ -1039,7 +936,6 @@
     S.map=new kakao.maps.Map($("map"), { center, level:7 });
     S.geocoder=new kakao.maps.services.Geocoder();
     bindOverlayClicksOnce();
-
     refreshPlaces().then(async ()=>{
       if(!S.selectedPlaceId && S.places.length>0){
         await selectPlace(S.places[0].id, { focus:"none" });
@@ -1049,7 +945,6 @@
     });
   }
 
-  // ===== DOM READY =====
   document.addEventListener("DOMContentLoaded", async ()=>{
     makeDraggable($("placeBar"));
     makeDraggable($("visitsWin"));
@@ -1071,7 +966,6 @@
 
     clearEditor();
 
-    // dock buttons
     $("btnLogin").addEventListener("click", async ()=>{
       if(S.user){
         await S.sb?.auth.signOut();
@@ -1081,7 +975,6 @@
       openOv($("loginOv"));
     });
     $("btnAccount").addEventListener("click", openAccount);
-
     $("btnAdd").addEventListener("click", ()=>{
       if(!isLoggedIn()){
         toast("로그인 후 추가 가능");
@@ -1091,8 +984,7 @@
       openOv($("addOv"));
     });
 
-    // search
-    $("searchInput").addEventListener("input", (e)=>renderSuggest(e.target.value));
+    $("searchInput").addEventListener("input",(e)=>renderSuggest(e.target.value));
     $("searchInput").addEventListener("keydown",(e)=>{
       if(e.key==="Escape") hideSuggest();
       if(e.key==="Enter"){
@@ -1106,17 +998,14 @@
       hideSuggest();
     });
 
-    // random nav
     $("pbPrev").addEventListener("click", goRandomNext);
     $("pbNext").addEventListener("click", goRandomNext);
 
-    // editor & manage
     $("saveVisit").addEventListener("click", saveVisit);
     $("cancelEdit").addEventListener("click", ()=>{ clearEditor(); toast("편집 취소"); });
     $("updatePlace").addEventListener("click", updatePlace);
     $("deletePlace").addEventListener("click", deletePlace);
 
-    // overlays
     $("closeLogin").addEventListener("click", ()=>closeOv($("loginOv")));
     $("openSignup").addEventListener("click", ()=>{ closeOv($("loginOv")); openOv($("signupOv")); });
     $("doLogin").addEventListener("click", doLogin);
@@ -1138,9 +1027,9 @@
       ensureOnscreen($("manageWin"));
     });
 
-    // boot supabase then map
     const ok = await waitFor(()=>window.supabase?.createClient, 8000);
     if(!ok){ toast("Supabase SDK 로딩 실패"); return; }
+
     S.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth:{ detectSessionInUrl:true } });
 
     const { data } = await S.sb.auth.getSession();
